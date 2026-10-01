@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import ActionForm from "@/components/action-form";
+import ExportLinks from "@/components/export-links";
 import { cardClass, inputClass, labelClass } from "../../ui";
 import { deleteDistribution, deleteReceipt, updateDistribution, updateReceipt } from "./actions";
 
@@ -66,6 +67,7 @@ export default async function RecordsPage() {
           Latest 50 of each. {canEdit ? "Deleted records are kept in the audit log, never erased." : "Only officers can edit or delete records."}
         </p>
       </div>
+      {can(user.role, "records:export") && <ExportLinks />}
 
       <section className="space-y-3">
         <h2 className="text-lg font-medium">Goods received</h2>

@@ -56,6 +56,7 @@ Run `npm run db:seed` after filling the `SEED_PASSWORD_*` values. It creates fiv
 | Edit or delete past records | Yes | Yes | No |
 | Create events and items | Yes | Yes | No |
 | View audit log | Yes | Yes | No |
+| Download CSV exports | Yes | Yes | No |
 | Rename accounts, reset passwords | Yes | No | No |
 
 All of this lives in `src/lib/permissions.ts`.
@@ -71,6 +72,12 @@ All of this lives in `src/lib/permissions.ts`.
 4. **Stock**: received, distributed and in-stock counts by item and by event.
 
 **Fixing mistakes (Records page).** Officers can edit a record (event, source, recipient details, remarks, and the quantity of bulk items) or delete it with a reason. Deleting a distribution puts its units back in stock. Deleting a receipt is blocked if any of its units were already given out. To change serial numbers, delete the receipt and enter it again. Nothing is erased: deleted records stay in the database and every change, with before and after values, is in the audit log. Events and items can be removed only when they have no records.
+
+**Search.** Type a serial number to see who received that exact unit, or search by person, roll number, source or remarks. Filters: event, item, recipient type, date range.
+
+**Audit log (officers).** Filter by person, action and type. Edits show what changed (old to new). Deleted records show the reason and serial numbers.
+
+**CSV export (officers).** Goods received, goods distributed, serial register (every serial and where it went) and stock. Files open directly in Excel. Each download is itself recorded in the audit log.
 
 Checks built in: a serial number cannot be added twice for an item, you cannot distribute more than is in stock, and two people distributing at the same moment cannot take the same unit.
 
@@ -112,5 +119,5 @@ Rules built into the design:
 - [x] Phase 2: Login (5 fixed accounts)
 - [x] Phase 3: Core screens
 - [x] Phase 4: Safety rules
-- [ ] Phase 5: Search, audit log, export
+- [x] Phase 5: Search, audit log, export
 - [ ] Phase 6: Testing and handover

@@ -9,6 +9,7 @@ export default async function Dashboard() {
     ["Edit or delete past records", can(user.role, "records:edit")],
     ["Create events and items", can(user.role, "catalogue:manage")],
     ["View the audit log", can(user.role, "audit:view")],
+    ["Download data as CSV", can(user.role, "records:export")],
     ["Manage accounts", can(user.role, "accounts:manage")],
   ] as const;
 

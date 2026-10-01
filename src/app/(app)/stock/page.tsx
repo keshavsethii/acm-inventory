@@ -1,14 +1,17 @@
 import { requireUser } from "@/lib/auth";
+import { can } from "@/lib/permissions";
+import ExportLinks from "@/components/export-links";
 import { getStockByEvent, getStockByItem } from "@/lib/stock";
 import { tableClass, tdClass, thClass } from "../../ui";
 
 export default async function StockPage() {
-  await requireUser();
+  const user = await requireUser();
   const [byItem, byEvent] = await Promise.all([getStockByItem(), getStockByEvent()]);
 
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Stock</h1>
+      {can(user.role, "records:export") && <ExportLinks />}
 
       <section>
         <h2 className="mb-2 font-medium">By item</h2>

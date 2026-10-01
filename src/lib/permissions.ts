@@ -7,6 +7,7 @@ export type Permission =
   | "records:delete"
   | "catalogue:manage" // events, items, recipient types
   | "audit:view"
+  | "records:export" // download CSV files
   | "accounts:manage"; // rename accounts, reset passwords
 
 const OFFICERS: Role[] = ["CHAIR", "VICE_CHAIR", "TREASURER", "SECRETARY"];
@@ -17,6 +18,7 @@ const MATRIX: Record<Permission, Role[]> = {
   "records:delete": OFFICERS,
   "catalogue:manage": OFFICERS,
   "audit:view": OFFICERS,
+  "records:export": OFFICERS,
   "accounts:manage": ["CHAIR", "VICE_CHAIR"],
 };
 
