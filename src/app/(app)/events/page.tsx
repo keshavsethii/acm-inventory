@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/auth";
 import { currentAcademicYear, toDateInput } from "@/lib/format";
 import ActionForm from "@/components/action-form";
 import { cardClass, inputClass, labelClass } from "../../ui";
-import { saveEvent } from "./actions";
+import { removeEvent, saveEvent } from "./actions";
 
 function EventFields(props: { id?: string; name?: string; date?: string; year: string }) {
   return (
@@ -46,6 +46,15 @@ export default async function EventsPage() {
             <ActionForm action={saveEvent} submitLabel="Save">
               <EventFields id={e.id} name={e.name} date={toDateInput(e.eventDate)} year={e.academicYear} />
             </ActionForm>
+            <details className="mt-3 text-sm">
+              <summary className="cursor-pointer text-red-700">Remove event</summary>
+              <div className="mt-2">
+                <ActionForm action={removeEvent} submitLabel="Confirm remove">
+                  <input type="hidden" name="id" value={e.id} />
+                  <p className="text-zinc-500">Only possible when the event has no records.</p>
+                </ActionForm>
+              </div>
+            </details>
           </div>
         ))}
       </section>

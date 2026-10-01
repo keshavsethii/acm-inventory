@@ -46,3 +46,24 @@ export async function saveEvent(_prev: FormState, formData: FormData): Promise<F
   revalidatePath("/events");
   return { success: `Added "${name}".`, nonce: Date.now() };
 }
+
+// Archives an event. Blocked while it still has receipts or distributions.
+export async function removeEvent(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requirePermission("catalogue:manage");
+  const id = field(formData, "id");
+  const event = await prisma.event.findFirst({ where: { id, deletedAt: null } });
+  if (!event) return { error: "This event no longer exists." };
+
+  const [receipts, distributions] = await Promise.all([
+    prisma.receipt.count({ where: { eventId: id, deletedAt: null } }),
+    prisma.distribution.count({ where: { eventId: id, deletedAt: null } }),
+  ]);
+  if (receipts + distributions > 0) {
+    return { error: `This event still has ${receipts} receipt(s) and ${distributions} distribution(s). Delete or move them first (Records page).` };
+  }
+
+  await prisma.event.update({ where: { id }, data: { deletedAt: new Date() } });
+  await logAudit({ userId: user.id, action: "DELETE", entityType: "Event", entityId: id, details: { name: event.name } });
+  revalidatePath("/events");
+  return { success: "Removed." };
+}

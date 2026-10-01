@@ -84,3 +84,28 @@ export async function toggleRecipientType(id: string) {
   });
   revalidatePath("/items");
 }
+
+// Archives an item. Blocked while it still has receipts or distributions.
+export async function removeItem(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requirePermission("catalogue:manage");
+  const id = field(formData, "id");
+  const item = await prisma.item.findFirst({ where: { id, deletedAt: null } });
+  if (!item) return { error: "This item no longer exists." };
+
+  const [receipts, distributions] = await Promise.all([
+    prisma.receipt.count({ where: { itemId: id, deletedAt: null } }),
+    prisma.distribution.count({ where: { itemId: id, deletedAt: null } }),
+  ]);
+  if (receipts + distributions > 0) {
+    return { error: `This item still has ${receipts} receipt(s) and ${distributions} distribution(s). Delete them first (Records page).` };
+  }
+
+  // The name is renamed so it can be used again for a new item (item names are unique).
+  await prisma.item.update({
+    where: { id },
+    data: { deletedAt: new Date(), name: `${item.name} [removed ${id.slice(-6)}]` },
+  });
+  await logAudit({ userId: user.id, action: "DELETE", entityType: "Item", entityId: id, details: { name: item.name } });
+  revalidatePath("/items");
+  return { success: "Removed." };
+}

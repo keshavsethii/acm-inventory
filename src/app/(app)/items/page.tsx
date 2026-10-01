@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import ActionForm from "@/components/action-form";
 import { cardClass, inputClass, labelClass } from "../../ui";
-import { addRecipientType, saveItem, toggleRecipientType } from "./actions";
+import { addRecipientType, removeItem, saveItem, toggleRecipientType } from "./actions";
 
 function ItemFields(props: { id?: string; name?: string; description?: string | null; hasSerial?: boolean; locked?: boolean }) {
   return (
@@ -52,6 +52,15 @@ export default async function ItemsPage() {
               <ActionForm action={saveItem} submitLabel="Save">
                 <ItemFields id={i.id} name={i.name} description={i.description} hasSerial={i.hasSerial} locked={used.has(i.id)} />
               </ActionForm>
+              <details className="mt-3 text-sm">
+                <summary className="cursor-pointer text-red-700">Remove item</summary>
+                <div className="mt-2">
+                  <ActionForm action={removeItem} submitLabel="Confirm remove">
+                    <input type="hidden" name="id" value={i.id} />
+                    <p className="text-zinc-500">Only possible when the item has no records.</p>
+                  </ActionForm>
+                </div>
+              </details>
             </div>
           ))}
         </section>

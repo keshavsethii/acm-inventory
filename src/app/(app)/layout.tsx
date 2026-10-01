@@ -15,6 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/receive" className="text-zinc-600 hover:text-zinc-900">Receive</Link>
             <Link href="/distribute" className="text-zinc-600 hover:text-zinc-900">Distribute</Link>
             <Link href="/stock" className="text-zinc-600 hover:text-zinc-900">Stock</Link>
+            <Link href="/records" className="text-zinc-600 hover:text-zinc-900">Records</Link>
             {can(user.role, "catalogue:manage") && (
               <>
                 <Link href="/events" className="text-zinc-600 hover:text-zinc-900">Events</Link>
