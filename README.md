@@ -63,6 +63,15 @@ All of this lives in `src/lib/permissions.ts`.
 - Sessions last 12 hours. An account is locked for 15 minutes after 5 wrong passwords.
 - Forgotten password: Chair or Vice Chair resets it on the Accounts page. If the Chair and Vice Chair are both locked out, set the `SEED_PASSWORD_*` value and run `npm run db:seed -- --reset-passwords`.
 
+## Using the app
+
+1. An officer adds **Events** and **Items** (tick "Has serial numbers" for items like T-shirts with numbered tags or devices; leave it off for stickers). Recipient types (Winner, Participant, Organizer...) are managed at the bottom of the Items page.
+2. **Receive**: pick event and item, enter who it came from, then either paste serial numbers (one per line) or enter a quantity.
+3. **Distribute**: pick event and item, then tick the serial numbers to give out (or enter a quantity for bulk items) and fill in the recipient. Recipient type and name are required for serial items and optional for bulk items.
+4. **Stock**: received, distributed and in-stock counts by item and by event.
+
+Checks built in: a serial number cannot be added twice for an item, you cannot distribute more than is in stock, and two people distributing at the same moment cannot take the same unit.
+
 ## Data model
 
 | Table | Purpose |
@@ -99,7 +108,7 @@ Rules built into the design:
 - [x] Phase 0: Project setup
 - [x] Phase 1: Database design
 - [x] Phase 2: Login (5 fixed accounts)
-- [ ] Phase 3: Core screens
+- [x] Phase 3: Core screens
 - [ ] Phase 4: Safety rules
 - [ ] Phase 5: Search, audit log, export
 - [ ] Phase 6: Testing and handover

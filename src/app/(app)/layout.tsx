@@ -10,8 +10,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex flex-1 flex-col">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <nav className="flex items-center gap-5 text-sm">
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <Link href="/" className="font-semibold">ACM Inventory</Link>
+            <Link href="/receive" className="text-zinc-600 hover:text-zinc-900">Receive</Link>
+            <Link href="/distribute" className="text-zinc-600 hover:text-zinc-900">Distribute</Link>
+            <Link href="/stock" className="text-zinc-600 hover:text-zinc-900">Stock</Link>
+            {can(user.role, "catalogue:manage") && (
+              <>
+                <Link href="/events" className="text-zinc-600 hover:text-zinc-900">Events</Link>
+                <Link href="/items" className="text-zinc-600 hover:text-zinc-900">Items</Link>
+              </>
+            )}
             {can(user.role, "accounts:manage") && (
               <Link href="/accounts" className="text-zinc-600 hover:text-zinc-900">Accounts</Link>
             )}

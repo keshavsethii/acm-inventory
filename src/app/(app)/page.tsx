@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { can, ROLE_LABELS } from "@/lib/permissions";
 
@@ -27,7 +28,11 @@ export default async function Dashboard() {
           ))}
         </ul>
       </section>
-      <p className="text-sm text-zinc-500">Events, goods and distribution screens arrive in the next phase.</p>
+      <div className="flex flex-wrap gap-3 text-sm">
+        <Link href="/receive" className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700">Receive goods</Link>
+        <Link href="/distribute" className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700">Distribute goods</Link>
+        <Link href="/stock" className="rounded-md border border-zinc-300 px-4 py-2 font-medium hover:bg-zinc-100">View stock</Link>
+      </div>
     </div>
   );
 }
