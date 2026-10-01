@@ -1,6 +1,12 @@
-// ACM Inventory Manager - Prisma schema
-// Phase 0: only the connection setup lives here.
-// Phase 1 adds the real tables (User, Event, Item, Receipt, SerialUnit, Distribution, AuditLog).
+// ACM Inventory Manager - database schema (Phase 1)
+//
+// Key ideas:
+// - Items are either "serialized" (every unit has its own serial number) or "bulk" (only counts matter).
+// - Receipt = goods coming IN. Distribution = goods going OUT.
+// - Serialized units live in SerialUnit and link to the Distribution they left in, so
+//   "which serial went to whom" is a single lookup.
+// - Stock is never stored; it is always calculated (received minus distributed).
+// - Records are never hard-deleted (deletedAt), and every change is written to AuditLog.
 
 generator client {
   provider = "prisma-client-js"
@@ -12,4 +18,192 @@ datasource db {
   url       = env("DATABASE_URL")
   // Direct connection (used by `prisma migrate`)
   directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------- enums
+
+enum Role {
+  CHAIR
+  VICE_CHAIR
+  TREASURER
+  SECRETARY
+  VOLUNTEER
+}
+
+enum SerialStatus {
+  IN_STOCK
+  DISTRIBUTED
+}
+
+// ---------------------------------------------------------------- users
+
+// Exactly five accounts, one per role (enforced by the unique role column).
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  passwordHash String
+  role         Role     @unique
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  receipts      Receipt[]
+  distributions Distribution[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------- catalogue
+
+model Event {
+  id           String    @id @default(cuid())
+  name         String
+  eventDate    DateTime?
+  // Example: "2026-27". Keeps records separated when the core team changes.
+  academicYear String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  receipts      Receipt[]
+  distributions Distribution[]
+
+  @@index([academicYear])
+  @@map("events")
+}
+
+model Item {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  // true  = each unit has a serial number (tracked per recipient)
+  // false = bulk item such as stickers (only counts tracked)
+  hasSerial   Boolean   @default(false)
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  receipts      Receipt[]
+  serialUnits   SerialUnit[]
+  distributions Distribution[]
+
+  @@map("items")
+}
+
+// Editable list for the recipient dropdown (Winner, Participant, Organizer, ...).
+model RecipientType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  distributions Distribution[]
+
+  @@map("recipient_types")
+}
+
+// ---------------------------------------------------------------- stock in
+
+model Receipt {
+  id           String    @id @default(cuid())
+  eventId      String
+  itemId       String
+  // Who gave the goods (sponsor, college, vendor, ...)
+  receivedFrom String
+  quantity     Int
+  remarks      String?
+  receivedAt   DateTime  @default(now())
+  createdById  String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  event     Event        @relation(fields: [eventId], references: [id])
+  item      Item         @relation(fields: [itemId], references: [id])
+  createdBy User         @relation(fields: [createdById], references: [id])
+  serials   SerialUnit[]
+
+  @@index([eventId])
+  @@index([itemId])
+  @@map("receipts")
+}
+
+// ---------------------------------------------------------------- stock out
+
+model Distribution {
+  id              String    @id @default(cuid())
+  eventId         String
+  itemId          String
+  // For serialized items this equals the number of linked SerialUnits.
+  quantity        Int
+  // Recipient fields are optional because bulk items (stickers) need no recipient.
+  // The app makes them required for serialized items.
+  recipientTypeId String?
+  recipientName   String?
+  rollNumber      String?
+  remarks         String?
+  distributedAt   DateTime  @default(now())
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  event         Event          @relation(fields: [eventId], references: [id])
+  item          Item           @relation(fields: [itemId], references: [id])
+  recipientType RecipientType? @relation(fields: [recipientTypeId], references: [id])
+  createdBy     User           @relation(fields: [createdById], references: [id])
+  serials       SerialUnit[]
+
+  @@index([eventId])
+  @@index([itemId])
+  @@index([rollNumber])
+  @@map("distributions")
+}
+
+// One row per physical unit of a serialized item.
+model SerialUnit {
+  id             String       @id @default(cuid())
+  serialNumber   String
+  itemId         String
+  receiptId      String
+  status         SerialStatus @default(IN_STOCK)
+  // Filled in when the unit is given out; cleared if that distribution is undone.
+  distributionId String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  item         Item          @relation(fields: [itemId], references: [id])
+  receipt      Receipt       @relation(fields: [receiptId], references: [id])
+  distribution Distribution? @relation(fields: [distributionId], references: [id])
+
+  // The same serial cannot exist twice for the same item.
+  @@unique([itemId, serialNumber])
+  @@index([receiptId])
+  @@index([distributionId])
+  @@index([serialNumber])
+  @@map("serial_units")
+}
+
+// ---------------------------------------------------------------- audit
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  // CREATE, UPDATE, DELETE, LOGIN, ...
+  action     String
+  // Receipt, Distribution, Item, Event, ...
+  entityType String
+  entityId   String
+  // Before/after values or a short description
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }
