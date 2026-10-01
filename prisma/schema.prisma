@@ -1,0 +1,15 @@
+// ACM Inventory Manager - Prisma schema
+// Phase 0: only the connection setup lives here.
+// Phase 1 adds the real tables (User, Event, Item, Receipt, SerialUnit, Distribution, AuditLog).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Pooled connection (used by the running app)
+  url       = env("DATABASE_URL")
+  // Direct connection (used by `prisma migrate`)
+  directUrl = env("DIRECT_URL")
+}
