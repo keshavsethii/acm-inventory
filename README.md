@@ -28,6 +28,9 @@ Inventory manager for the ACM Student Chapter, IIIT Una. Tracks goods received f
 | `DATABASE_URL` | Pooled Postgres connection string, used by the running app | Neon dashboard, your project, **Connect**, turn **Connection pooling ON**, copy the string |
 | `DIRECT_URL` | Direct (non-pooled) connection string, used by `prisma migrate` | Same place, turn **Connection pooling OFF**, copy the string |
 
+| `SESSION_SECRET` | Random secret that signs login cookies (32+ characters) | Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `SEED_PASSWORD_CHAIR`, `_VICE_CHAIR`, `_TREASURER`, `_SECRETARY`, `_VOLUNTEER` | Starting passwords for the 5 accounts (10+ characters) | Choose them yourself; used only by `npm run db:seed` |
+
 Notes:
 - The pooled string has `-pooler` in its hostname; the direct one does not.
 - Both must end with `?sslmode=require`.
@@ -42,6 +45,23 @@ npm run db:seed
 
 The first command creates the tables in Neon and writes a `prisma/migrations/` folder. Commit that folder to GitHub.
 After this, `npm run db:studio` lets you browse the tables.
+
+## Login and permissions
+
+Run `npm run db:seed` after filling the `SEED_PASSWORD_*` values. It creates five accounts with these usernames: `chair`, `vicechair`, `treasurer`, `secretary`, `volunteer`. After the first login, delete the `SEED_PASSWORD_*` lines from `.env`, set real names on the Accounts page, and change passwords in Settings.
+
+| Action | Chair / Vice Chair | Treasurer / Secretary | Volunteer |
+| --- | --- | --- | --- |
+| Add goods received, distribute | Yes | Yes | Yes |
+| Edit or delete past records | Yes | Yes | No |
+| Create events and items | Yes | Yes | No |
+| View audit log | Yes | Yes | No |
+| Rename accounts, reset passwords | Yes | No | No |
+
+All of this lives in `src/lib/permissions.ts`.
+
+- Sessions last 12 hours. An account is locked for 15 minutes after 5 wrong passwords.
+- Forgotten password: Chair or Vice Chair resets it on the Accounts page. If the Chair and Vice Chair are both locked out, set the `SEED_PASSWORD_*` value and run `npm run db:seed -- --reset-passwords`.
 
 ## Data model
 
@@ -78,7 +98,7 @@ Rules built into the design:
 
 - [x] Phase 0: Project setup
 - [x] Phase 1: Database design
-- [ ] Phase 2: Login (5 fixed accounts)
+- [x] Phase 2: Login (5 fixed accounts)
 - [ ] Phase 3: Core screens
 - [ ] Phase 4: Safety rules
 - [ ] Phase 5: Search, audit log, export
