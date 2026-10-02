@@ -66,7 +66,7 @@ export async function addRecipientType(_prev: FormState, formData: FormData): Pr
 
   const created = await prisma.recipientType.create({ data: { name } });
   await logAudit({ userId: user.id, action: "CREATE", entityType: "RecipientType", entityId: created.id, details: { name } });
-  revalidatePath("/items");
+  revalidatePath("/types");
   return { success: `Added "${name}".`, nonce: Date.now() };
 }
 
@@ -82,7 +82,7 @@ export async function toggleRecipientType(id: string) {
     entityId: id,
     details: { name: type.name, isActive: !type.isActive },
   });
-  revalidatePath("/items");
+  revalidatePath("/types");
 }
 
 // Archives an item. Blocked while it still has receipts or distributions.

@@ -1,70 +1,90 @@
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import ExportLinks from "@/components/export-links";
 import { getStockByEvent, getStockByItem } from "@/lib/stock";
-import { pillBlue, pillGray, tableClass, tdClass, thClass } from "../../ui";
+import ExportLinks from "@/components/export-links";
 import PageShell from "@/components/page-shell";
+import Tabs from "@/components/tabs";
+import { cardClass, emptyClass, pillBlue, pillGray } from "../../ui";
 
-export default async function StockPage() {
+type Params = Record<string, string | string[] | undefined>;
+
+export default async function StockPage({ searchParams }: { searchParams: Promise<Params> }) {
   const user = await requireUser();
-  const [byItem, byEvent] = await Promise.all([getStockByItem(), getStockByEvent()]);
+  const sp = await searchParams;
+  const view = (Array.isArray(sp.view) ? sp.view[0] : sp.view) === "events" ? "events" : "items";
 
   return (
-    <PageShell eyebrow="Overview" title="Stock" description="Received, distributed and what is left, by item and by event." actions={can(user.role, "records:export") ? <ExportLinks /> : null}>
+    <PageShell
+      title="Stock"
+      description="What came in, what went out and what is left."
+      actions={can(user.role, "records:export") ? <ExportLinks /> : null}
+    >
+      <Tabs
+        tabs={[
+          { href: "/stock", label: "By item", active: view === "items" },
+          { href: "/stock?view=events", label: "By event", active: view === "events" },
+        ]}
+      />
 
-      <section>
-        <h2 className="mb-2 text-lg font-semibold tracking-tight">By item</h2>
-        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-          <table className={tableClass}>
-            <thead>
-              <tr>
-                <th className={thClass}>Item</th><th className={thClass}>Type</th><th className={thClass}>Received</th>
-                <th className={thClass}>Distributed</th><th className={thClass}>In stock</th>
-              </tr>
-            </thead>
-            <tbody>
-              {byItem.length === 0 && <tr><td className={tdClass} colSpan={5}>No items yet.</td></tr>}
-              {byItem.map((i) => (
-                <tr key={i.id}>
-                  <td className={tdClass}>{i.name}</td>
-                  <td className={tdClass}><span className={i.hasSerial ? pillBlue : pillGray}>{i.hasSerial ? "Serial numbers" : "Bulk"}</span></td>
-                  <td className={tdClass}>{i.received}</td>
-                  <td className={tdClass}>{i.distributed}</td>
-                  <td className={`${tdClass} text-base font-semibold`}>{i.inStock}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold tracking-tight">By event</h2>
-        {byEvent.length === 0 && <p className="text-sm text-muted">No events yet.</p>}
-        {byEvent.map((e) => (
-          <div key={e.id} className="overflow-x-auto rounded-2xl border border-line bg-surface">
-            <div className="border-b border-line px-3 py-2 text-sm font-medium">
-              {e.name} <span className="font-normal text-muted">({e.academicYear})</span>
-            </div>
-            <table className={tableClass}>
-              <thead>
-                <tr><th className={thClass}>Item</th><th className={thClass}>Received</th><th className={thClass}>Distributed</th><th className={thClass}>Left from this event</th></tr>
-              </thead>
-              <tbody>
-                {e.rows.length === 0 && <tr><td className={tdClass} colSpan={4}>No activity yet.</td></tr>}
-                {e.rows.map((r) => (
-                  <tr key={r.item}>
-                    <td className={tdClass}>{r.item}</td>
-                    <td className={tdClass}>{r.received}</td>
-                    <td className={tdClass}>{r.distributed}</td>
-                    <td className={tdClass}>{r.received - r.distributed}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </section>
+      {view === "items" ? <ItemsView /> : <EventsView />}
     </PageShell>
+  );
+}
+
+async function ItemsView() {
+  const items = await getStockByItem();
+  if (items.length === 0) return <p className={emptyClass}>No items yet.</p>;
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {items.map((i) => (
+        <div key={i.id} className={`${cardClass} space-y-4`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-2">
+              <p className="truncate font-semibold">{i.name}</p>
+              <span className={i.hasSerial ? pillBlue : pillGray}>{i.hasSerial ? "Serial numbers" : "Bulk"}</span>
+            </div>
+            <p className="text-right">
+              <span className="text-4xl font-bold tabular-nums tracking-tight">{i.inStock}</span>
+              <span className="block text-xs text-muted">in stock</span>
+            </p>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${i.received > 0 ? Math.round((i.inStock / i.received) * 100) : 0}%` }} />
+          </div>
+          <p className="text-xs text-muted">{i.received} received · {i.distributed} given out</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+async function EventsView() {
+  const events = await getStockByEvent();
+  if (events.length === 0) return <p className={emptyClass}>No events yet.</p>;
+  return (
+    <div className="space-y-4">
+      {events.map((e) => (
+        <div key={e.id} className="overflow-hidden rounded-2xl border border-line bg-surface">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <p className="font-semibold">{e.name}</p>
+            <span className="text-xs text-muted">{e.academicYear}</span>
+          </div>
+          {e.rows.length === 0 ? (
+            <p className="px-5 py-4 text-sm text-muted">No activity yet.</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {e.rows.map((r) => (
+                <li key={r.item} className="flex items-center gap-4 px-5 py-3 text-sm">
+                  <span className="min-w-0 flex-1 truncate font-medium">{r.item}</span>
+                  <span className="tabular-nums text-success" title="Received">+{r.received}</span>
+                  <span className="tabular-nums text-primary" title="Given out">−{r.distributed}</span>
+                  <span className="w-14 text-right font-semibold tabular-nums" title="Left from this event">{r.received - r.distributed}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }

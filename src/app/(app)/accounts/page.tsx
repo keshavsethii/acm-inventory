@@ -17,11 +17,10 @@ export default async function AccountsPage() {
 
   return (
     <PageShell
-      eyebrow="Team"
       title="Accounts"
       description="Pick an account to rename it or reset its password, for example when the team changes or someone forgets theirs."
     >
-      <section className="space-y-3">
+      <section className="space-y-2.5">
         {users.map((u) => (
           <ExpandableRow
             key={u.id}

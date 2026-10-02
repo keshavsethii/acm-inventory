@@ -1,10 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
 import ActionForm from "@/components/action-form";
+import AddPanel from "@/components/add-panel";
 import ExpandableRow from "@/components/expandable-row";
 import PageShell from "@/components/page-shell";
-import { cardClass, emptyClass, inputClass, labelClass, pillBlue, pillGray, sectionTitleClass, smallButton } from "../../ui";
-import { addRecipientType, removeItem, saveItem, toggleRecipientType } from "./actions";
+import { SetupTabs } from "@/components/tabs";
+import { emptyClass, inputClass, labelClass, pillBlue, pillGray } from "../../ui";
+import { removeItem, saveItem } from "./actions";
 
 function ItemFields(props: { id?: string; name?: string; description?: string | null; hasSerial?: boolean; locked?: boolean }) {
   return (
@@ -29,25 +31,24 @@ function ItemFields(props: { id?: string; name?: string; description?: string | 
 
 export default async function ItemsPage() {
   await requirePermission("catalogue:manage");
-  const [items, types, receiptCounts] = await Promise.all([
+  const [items, receiptCounts] = await Promise.all([
     prisma.item.findMany({ where: { deletedAt: null }, orderBy: { name: "asc" } }),
-    prisma.recipientType.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.receipt.groupBy({ by: ["itemId"], _count: true }),
   ]);
   const used = new Set(receiptCounts.map((r) => r.itemId));
 
   return (
-    <PageShell eyebrow="Catalogue" title="Items" description="What the chapter keeps track of, and which items carry serial numbers.">
-      <section className={cardClass}>
-        <h2 className={`${sectionTitleClass} mb-4`}>Add an item</h2>
+    <PageShell title="Setup" description="Events, items and recipient types used across the app.">
+      <SetupTabs current="items" />
+
+      <AddPanel label="New item">
         <ActionForm action={saveItem} submitLabel="Add item">
           <ItemFields />
         </ActionForm>
-      </section>
+      </AddPanel>
 
-      <section className="space-y-3">
-        <h2 className={sectionTitleClass}>All items <span className="font-normal text-muted">({items.length})</span></h2>
-        {items.length === 0 && <p className={emptyClass}>No items yet. Add the first one above.</p>}
+      <section className="space-y-2.5">
+        {items.length === 0 && <p className={emptyClass}>No items yet.</p>}
         {items.map((i) => (
           <ExpandableRow
             key={i.id}
@@ -77,38 +78,13 @@ export default async function ItemsPage() {
                 panel: (
                   <ActionForm action={removeItem} submitLabel="Remove item" tone="danger">
                     <input type="hidden" name="id" value={i.id} />
-                    <p className="text-sm text-muted">Removing is only possible when the item has no records.</p>
+                    <p className="text-sm text-muted">Only possible when the item has no records.</p>
                   </ActionForm>
                 ),
               },
             ]}
           />
         ))}
-      </section>
-
-      <section className="space-y-3">
-        <div>
-          <h2 className={sectionTitleClass}>Recipient types</h2>
-          <p className="mt-1 text-sm text-muted">These fill the dropdown on the Distribute form. Hiding one keeps old records intact.</p>
-        </div>
-        <div className={cardClass}>
-          <ActionForm action={addRecipientType} submitLabel="Add type">
-            <div className="max-w-sm">
-              <label className={labelClass}>New type (for example Guest or Judge)</label>
-              <input name="name" required maxLength={40} className={inputClass} />
-            </div>
-          </ActionForm>
-        </div>
-        <ul className="space-y-2">
-          {types.map((t) => (
-            <li key={t.id} className="flex items-center justify-between rounded-2xl border border-line bg-surface px-5 py-3">
-              <span className={t.isActive ? "font-medium" : "text-muted line-through"}>{t.name}</span>
-              <form action={toggleRecipientType.bind(null, t.id)}>
-                <button className={smallButton()}>{t.isActive ? "Hide" : "Show"}</button>
-              </form>
-            </li>
-          ))}
-        </ul>
       </section>
     </PageShell>
   );

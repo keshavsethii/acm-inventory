@@ -3,87 +3,87 @@ import { requireUser } from "@/lib/auth";
 import { can, ROLE_LABELS } from "@/lib/permissions";
 import { logout } from "../login/actions";
 import Avatar from "@/components/avatar";
-import Footer from "@/components/footer";
+import Icon, { type IconName } from "@/components/icon";
 import Logo from "@/components/logo";
-import Menu from "@/components/menu";
+import MobileNav from "@/components/mobile-nav";
 import NavLink from "@/components/nav-link";
 import ThemeToggle from "@/components/theme-toggle";
 
-const MAIN = [
-  ["/receive", "Receive"],
-  ["/distribute", "Distribute"],
-  ["/stock", "Stock"],
-  ["/records", "Records"],
-  ["/search", "Search"],
-];
+type NavItem = { href: string; label: string; icon: IconName; match?: string[] };
 
-function Chevron() {
-  return (
-    <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
+const OVERVIEW: NavItem = { href: "/", label: "Overview", icon: "home" };
+const WORK: NavItem[] = [
+  { href: "/receive", label: "Receive", icon: "receive" },
+  { href: "/distribute", label: "Distribute", icon: "distribute" },
+];
+const LOOKUP: NavItem[] = [
+  { href: "/search", label: "Search", icon: "search" },
+  { href: "/stock", label: "Stock", icon: "stock" },
+  { href: "/records", label: "Records", icon: "records" },
+];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
 
-  const manage = [
-    can(user.role, "catalogue:manage") && ["/events", "Events"],
-    can(user.role, "catalogue:manage") && ["/items", "Items"],
-    can(user.role, "audit:view") && ["/audit", "Audit log"],
-    can(user.role, "accounts:manage") && ["/accounts", "Accounts"],
-  ].filter((x): x is string[] => Boolean(x));
+  const admin: NavItem[] = [];
+  if (can(user.role, "catalogue:manage")) admin.push({ href: "/events", label: "Setup", icon: "setup", match: ["/items", "/types"] });
+  if (can(user.role, "audit:view")) admin.push({ href: "/audit", label: "Audit log", icon: "audit" });
+  if (can(user.role, "accounts:manage")) admin.push({ href: "/accounts", label: "Accounts", icon: "accounts" });
+
+  const sections = [
+    { title: "Work", items: WORK },
+    { title: "Look up", items: LOOKUP },
+    ...(admin.length ? [{ title: "Admin", items: admin }] : []),
+  ];
+
+  const settings: NavItem = { href: "/settings", label: "Settings", icon: "user" };
+  const mobilePrimary = [OVERVIEW, ...WORK, LOOKUP[0]];
+  const mobileMore = [LOOKUP[1], LOOKUP[2], ...admin, settings];
 
   return (
-    <div className="flex min-h-screen flex-1 flex-col">
-      <header className="sticky top-0 z-40 border-b border-line bg-nav/85 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
-          <Link href="/" aria-label="Go to dashboard" className="mr-auto md:mr-0">
-            <Logo />
-          </Link>
+    <div className="min-h-screen lg:grid lg:grid-cols-[17rem_1fr]">
+      <aside className="sticky top-0 hidden h-screen flex-col border-r border-line bg-nav/60 p-4 backdrop-blur lg:flex">
+        <Link href="/" aria-label="Overview" className="px-2 py-3">
+          <Logo stacked />
+        </Link>
 
-          <nav className="order-last flex w-full items-center gap-1 overflow-x-auto pb-1 md:order-none md:ml-auto md:w-auto md:overflow-visible md:pb-0">
-            {MAIN.map(([href, label]) => <NavLink key={href} href={href}>{label}</NavLink>)}
-            {manage.length > 0 && (
-              <Menu label={<>Manage <Chevron /></>} className="hidden md:block">
-                {manage.map(([href, label]) => <NavLink key={href} href={href} variant="menu">{label}</NavLink>)}
-              </Menu>
-            )}
-          </nav>
+        <nav className="mt-4 flex-1 space-y-6 overflow-y-auto">
+          <NavLink {...OVERVIEW} />
+          {sections.map((s) => (
+            <div key={s.title} className="space-y-1">
+              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-muted/70">{s.title}</p>
+              {s.items.map((i) => <NavLink key={i.href} {...i} />)}
+            </div>
+          ))}
+        </nav>
 
-          <div className="flex items-center gap-1">
+        <div className="mt-4 space-y-1 border-t border-line pt-4">
+          <div className="flex items-center gap-3 px-2 pb-2">
+            <Avatar name={user.name} size="md" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold">{user.name}</p>
+              <p className="text-xs text-muted">{ROLE_LABELS[user.role]}</p>
+            </div>
             <ThemeToggle />
-            <Menu
-              align="right"
-              ariaLabel="Account menu"
-              summaryClassName="flex cursor-pointer items-center rounded-xl p-0.5 transition hover:ring-2 hover:ring-primary/40"
-              label={<Avatar name={user.name} size="md" />}
-            >
-              <div className="px-3 py-2">
-                <p className="truncate font-semibold">{user.name}</p>
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">{ROLE_LABELS[user.role]}</p>
-              </div>
-              <div className="my-1 border-t border-line" />
-              <NavLink href="/" variant="menu">Dashboard</NavLink>
-              <NavLink href="/settings" variant="menu">Settings</NavLink>
-              {manage.length > 0 && (
-                <div className="md:hidden">
-                  <div className="my-1 border-t border-line" />
-                  {manage.map(([href, label]) => <NavLink key={href} href={href} variant="menu">{label}</NavLink>)}
-                </div>
-              )}
-              <div className="my-1 border-t border-line" />
-              <form action={logout}>
-                <button className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-danger transition hover:bg-surface-2">Log out</button>
-              </form>
-            </Menu>
           </div>
+          <NavLink {...settings} />
+          <form action={logout}>
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-danger">
+              <Icon name="logout" /> Log out
+            </button>
+          </form>
         </div>
-      </header>
+      </aside>
 
-      <main className="flex-1">{children}</main>
-      <Footer />
+      <div className="flex min-w-0 flex-col">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-nav/85 px-4 py-2.5 backdrop-blur lg:hidden">
+          <Link href="/" aria-label="Overview"><Logo /></Link>
+          <ThemeToggle />
+        </header>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-28 pt-8 lg:px-10 lg:pb-14 lg:pt-12">{children}</main>
+      </div>
+
+      <MobileNav primary={mobilePrimary} more={mobileMore} logoutAction={logout} />
     </div>
   );
 }

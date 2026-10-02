@@ -1,13 +1,15 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { can } from "@/lib/permissions";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatShort } from "@/lib/format";
 import ActionForm from "@/components/action-form";
-import ExpandableRow, { type RowAction } from "@/components/expandable-row";
+import type { RowAction } from "@/components/expandable-row";
 import ExportLinks from "@/components/export-links";
+import Facts from "@/components/facts";
 import PageShell from "@/components/page-shell";
+import RecordRow from "@/components/record-row";
 import SerialChips from "@/components/serial-chips";
+import Tabs from "@/components/tabs";
 import { emptyClass, inputClass, labelClass } from "../../ui";
 import { deleteDistribution, deleteReceipt, updateDistribution, updateReceipt } from "./actions";
 
@@ -70,26 +72,21 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
         })
       : [];
 
-  const tab = (active: boolean) =>
-    `rounded-lg px-4 py-2 text-sm font-medium transition ${active ? "bg-primary/15 text-primary" : "text-muted hover:text-foreground"}`;
-
   return (
     <PageShell
-      eyebrow="History"
       title="Records"
-      description="Everything that came in and went out. Deleted records are kept in the audit log, never erased."
+      description="Everything that came in and went out. Deleted records stay in the audit log."
       actions={can(user.role, "records:export") ? <ExportLinks /> : null}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="inline-flex gap-1 rounded-xl border border-line bg-surface p-1">
-          <Link href="/records?view=received" className={tab(view === "received")}>Goods received ({receiptCount})</Link>
-          <Link href="/records?view=distributed" className={tab(view === "distributed")}>Goods distributed ({distributionCount})</Link>
-        </div>
-        <p className="hidden text-sm text-muted sm:block">Latest 50 shown</p>
-      </div>
+      <Tabs
+        tabs={[
+          { href: "/records", label: `Received (${receiptCount})`, active: view === "received" },
+          { href: "/records?view=distributed", label: `Given out (${distributionCount})`, active: view === "distributed" },
+        ]}
+      />
 
       {view === "received" && (
-        <section className="space-y-3">
+        <section className="space-y-2.5">
           {receipts.length === 0 && <p className={emptyClass}>Nothing received yet.</p>}
           {receipts.map((r) => {
             const actions: RowAction[] = [];
@@ -121,17 +118,17 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
               });
             }
             return (
-              <ExpandableRow
+              <RecordRow
                 key={r.id}
+                kind="in"
+                title={`${r.quantity} × ${r.item.name}`}
+                subtitle={`from ${r.receivedFrom} · ${r.event.name}`}
+                side={formatShort(r.receivedAt)}
                 actions={actions}
-                summary={
-                  <div className="space-y-2">
-                    <p className="font-semibold">
-                      {r.quantity} × {r.item.name} <span className="font-normal text-muted">from {r.receivedFrom}</span>
-                    </p>
-                    <p className="text-sm text-muted">{r.event.name} · {formatDateTime(r.receivedAt)} · by {r.createdBy.name}</p>
-                    <SerialChips serials={r.serials.map((s) => s.serialNumber)} />
-                    {r.remarks && <p className="text-sm text-muted">Remarks: {r.remarks}</p>}
+                details={
+                  <div className="space-y-4">
+                    <Facts rows={[["Event", r.event.name], ["Received", formatDateTime(r.receivedAt)], ["Entered by", r.createdBy.name], ["Remarks", r.remarks ?? "-"]]} />
+                    <SerialChips serials={r.serials.map((s) => s.serialNumber)} limit={12} />
                   </div>
                 }
               />
@@ -141,11 +138,11 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
       )}
 
       {view === "distributed" && (
-        <section className="space-y-3">
-          {distributions.length === 0 && <p className={emptyClass}>Nothing distributed yet.</p>}
+        <section className="space-y-2.5">
+          {distributions.length === 0 && <p className={emptyClass}>Nothing given out yet.</p>}
           {distributions.map((d) => {
             const typeOptions = types.filter((t) => t.isActive || t.id === d.recipientTypeId).map((t) => ({ id: t.id, label: t.name }));
-            const recipient = [d.recipientName, d.rollNumber, d.recipientType?.name].filter(Boolean).join(" · ");
+            const recipient = [d.recipientName, d.rollNumber].filter(Boolean).join(" · ");
             const actions: RowAction[] = [];
             if (canEdit) {
               actions.push({
@@ -177,17 +174,17 @@ export default async function RecordsPage({ searchParams }: { searchParams: Prom
               });
             }
             return (
-              <ExpandableRow
+              <RecordRow
                 key={d.id}
+                kind="out"
+                title={`${d.quantity} × ${d.item.name}`}
+                subtitle={`${recipient ? `to ${recipient}` : "no recipient recorded"} · ${d.event.name}`}
+                side={formatShort(d.distributedAt)}
                 actions={actions}
-                summary={
-                  <div className="space-y-2">
-                    <p className="font-semibold">
-                      {d.quantity} × {d.item.name} <span className="font-normal text-muted">to {recipient || "no recipient recorded"}</span>
-                    </p>
-                    <p className="text-sm text-muted">{d.event.name} · {formatDateTime(d.distributedAt)} · by {d.createdBy.name}</p>
-                    <SerialChips serials={d.serials.map((s) => s.serialNumber)} />
-                    {d.remarks && <p className="text-sm text-muted">Remarks: {d.remarks}</p>}
+                details={
+                  <div className="space-y-4">
+                    <Facts rows={[["Event", d.event.name], ["Given", formatDateTime(d.distributedAt)], ["Recipient type", d.recipientType?.name ?? "-"], ["Entered by", d.createdBy.name], ["Remarks", d.remarks ?? "-"]]} />
+                    <SerialChips serials={d.serials.map((s) => s.serialNumber)} limit={12} />
                   </div>
                 }
               />

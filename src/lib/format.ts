@@ -1,6 +1,8 @@
 const dateTime = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" });
 const dateOnly = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeZone: "UTC" });
 
+const short = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
+export const formatShort = (d: Date) => short.format(d);
 export const formatDateTime = (d: Date) => dateTime.format(d);
 // Event dates are stored as UTC midnight, so they are shown in UTC.
 export const formatDate = (d: Date) => dateOnly.format(d);

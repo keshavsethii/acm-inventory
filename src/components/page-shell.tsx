@@ -1,26 +1,20 @@
-import { eyebrowClass } from "@/app/ui";
-
-// Page header band (small blue label, big title, short description) followed by the page content.
+// Compact page header (title, one line of help, optional actions) followed by the content.
 export default function PageShell(props: {
-  eyebrow: string;
   title: string;
   description?: React.ReactNode;
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <section className="border-b border-line bg-surface/60">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-end justify-between gap-6 px-4 py-10 sm:py-14">
-          <div className="max-w-2xl">
-            <p className={eyebrowClass}>{props.eyebrow}</p>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">{props.title}</h1>
-            {props.description && <p className="mt-3 text-base text-muted">{props.description}</p>}
-          </div>
-          {props.actions}
+    <div className="space-y-8">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{props.title}</h1>
+          {props.description && <p className="mt-1.5 max-w-xl text-muted">{props.description}</p>}
         </div>
-      </section>
-      <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-10">{props.children}</div>
-    </>
+        {props.actions}
+      </header>
+      {props.children}
+    </div>
   );
 }

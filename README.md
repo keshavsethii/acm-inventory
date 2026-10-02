@@ -118,7 +118,7 @@ Rules built into the design:
 
 ## Look and feel
 
-The design follows the chapter website: dark by default with a light option (sun/moon button in the header, remembered per browser), blue accents, rounded cards and the Inter font. Colours live in one place, `src/app/globals.css`. To use the chapter's real logo, replace `public/logo.svg` (same file name), or change the path in `src/components/logo.tsx`.
+Sidebar navigation grouped as Work (Receive, Distribute), Look up (Search, Stock, Records) and Admin (Setup, Audit log, Accounts, shown by role). On phones the sidebar becomes a bottom tab bar. Lists show one calm line per item and open on click. Dark by default with a light option (sun/moon button, remembered per browser). Colours live in `src/app/globals.css`. To use the chapter's real logo, replace `public/logo.svg` (same file name), or change the path in `src/components/logo.tsx`.
 
 ## Guides
 

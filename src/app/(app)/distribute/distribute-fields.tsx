@@ -10,12 +10,26 @@ type Props = {
   serialsByItem: Record<string, string[]>;
 };
 
+const heading = "text-xs font-semibold uppercase tracking-[0.15em] text-primary";
+const pillBox =
+  "inline-flex cursor-pointer rounded-full border border-line bg-surface-2 px-4 py-1.5 text-sm font-medium transition peer-checked:border-primary peer-checked:bg-primary/15 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40";
+
+function TypePill(props: { value: string; label: string; checked?: boolean; required?: boolean }) {
+  return (
+    <label>
+      <input type="radio" name="recipientTypeId" value={props.value} defaultChecked={props.checked} required={props.required} className="peer sr-only" />
+      <span className={pillBox}>{props.label}</span>
+    </label>
+  );
+}
+
 export default function DistributeFields({ events, items, types, serialsByItem }: Props) {
   const [itemId, setItemId] = useState("");
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const item = items.find((i) => i.id === itemId);
   const available = serialsByItem[itemId] ?? [];
+  const needsRecipient = Boolean(item?.hasSerial);
 
   function toggle(serial: string) {
     setSelected((prev) => {
@@ -28,7 +42,8 @@ export default function DistributeFields({ events, items, types, serialsByItem }
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <p className={heading}>What is going out</p>
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Event</label>
           <select name="eventId" required defaultValue="" className={inputClass}>
@@ -46,57 +61,48 @@ export default function DistributeFields({ events, items, types, serialsByItem }
             className={inputClass}
           >
             <option value="" disabled>Choose an item</option>
-            {items.map((i) => (
-              <option key={i.id} value={i.id} disabled={i.stock <= 0}>
-                {i.name} ({i.stock} in stock)
-              </option>
-            ))}
+            {items.map((i) => <option key={i.id} value={i.id} disabled={i.stock <= 0}>{i.name} ({i.stock} left)</option>)}
           </select>
         </div>
       </div>
 
       {item?.hasSerial && (
-        <div>
-          <label className={labelClass}>Serial numbers to give ({selected.size} selected, {available.length} in stock)</label>
-          <input
-            type="search"
-            placeholder="Type to filter"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className={`${inputClass} mb-2`}
-          />
-          <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line p-2">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <label className={`${labelClass} mb-0`}>
+              Pick serial numbers <span className="ml-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary">{selected.size} selected</span>
+            </label>
+            <span className="text-xs text-muted">{available.length} in stock</span>
+          </div>
+          {available.length > 8 && (
+            <input type="search" placeholder="Filter serial numbers" value={filter} onChange={(e) => setFilter(e.target.value)} className={inputClass} />
+          )}
+          <div className="flex max-h-56 flex-wrap gap-2 overflow-y-auto rounded-xl border border-line p-3">
             {available.map((s) => (
-              <label
-                key={s}
-                hidden={!s.toLowerCase().includes(filter.trim().toLowerCase())}
-                className="flex items-center gap-2 font-mono text-sm"
-              >
-                <input type="checkbox" name="serials" value={s} checked={selected.has(s)} onChange={() => toggle(s)} />
-                {s}
+              <label key={s} hidden={!s.toLowerCase().includes(filter.trim().toLowerCase())}>
+                <input type="checkbox" name="serials" value={s} checked={selected.has(s)} onChange={() => toggle(s)} className="peer sr-only" />
+                <span className={`${pillBox} rounded-lg px-2.5 py-1 font-mono text-xs`}>{s}</span>
               </label>
             ))}
           </div>
         </div>
       )}
       {item && !item.hasSerial && (
-        <div>
-          <label className={labelClass}>Quantity (max {item.stock})</label>
+        <div className="max-w-xs">
+          <label className={labelClass}>Quantity <span className="text-muted">(up to {item.stock})</span></label>
           <input name="quantity" type="number" min={1} max={item.stock} step={1} required className={inputClass} />
         </div>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <p className={`${heading} pt-2`}>Who gets it{needsRecipient ? "" : " (optional)"}</p>
+      <div role="radiogroup" aria-label="Recipient type" className="flex flex-wrap gap-2">
+        {!needsRecipient && <TypePill value="" label="No recipient" checked />}
+        {types.map((t) => <TypePill key={t.id} value={t.id} label={t.name} required={needsRecipient} />)}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>Recipient type{item?.hasSerial ? "" : " (optional)"}</label>
-          <select name="recipientTypeId" required={item?.hasSerial} defaultValue="" className={inputClass}>
-            <option value="">None</option>
-            {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={labelClass}>Recipient name{item?.hasSerial ? "" : " (optional)"}</label>
-          <input name="recipientName" required={item?.hasSerial} maxLength={120} className={inputClass} />
+          <label className={labelClass}>Name</label>
+          <input name="recipientName" required={needsRecipient} maxLength={120} className={inputClass} />
         </div>
         <div>
           <label className={labelClass}>Roll number (optional)</label>

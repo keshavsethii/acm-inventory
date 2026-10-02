@@ -1,3 +1,7 @@
+import Icon from "./icon";
+import Menu from "./menu";
+import { smallButton } from "@/app/ui";
+
 const EXPORTS = [
   ["receipts", "Goods received"],
   ["distributions", "Goods distributed"],
@@ -5,19 +9,20 @@ const EXPORTS = [
   ["stock", "Stock"],
 ];
 
-// Plain links: the browser downloads the file straight from the export route.
+// One tidy "Export" button instead of four. Plain links: the browser downloads the CSV directly.
 export default function ExportLinks() {
   return (
-    <div className="flex flex-wrap gap-2 text-sm">
+    <Menu
+      align="right"
+      ariaLabel="Export data"
+      summaryClassName={`${smallButton()} cursor-pointer gap-2`}
+      label={<><Icon name="download" size={15} /> Export CSV</>}
+    >
       {EXPORTS.map(([kind, label]) => (
-        <a
-          key={kind}
-          href={`/api/export/${kind}`}
-          className="rounded-xl border border-line bg-surface px-3.5 py-2 font-medium transition hover:border-primary/60 hover:bg-surface-2"
-        >
-          ↓ {label} (CSV)
+        <a key={kind} href={`/api/export/${kind}`} className="block rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-foreground">
+          {label}
         </a>
       ))}
-    </div>
+    </Menu>
   );
 }
