@@ -2,8 +2,9 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
-import { buttonClass, cardClass, inputClass, labelClass, pillBlue, pillGreen, tableClass, tdClass, thClass } from "../../ui";
 import PageShell from "@/components/page-shell";
+import SerialChips from "@/components/serial-chips";
+import { buttonClass, cardClass, emptyClass, inputClass, labelClass, pillBlue, pillGreen, sectionTitleClass, tableClass, tdClass, thClass } from "../../ui";
 
 type Params = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -19,6 +20,10 @@ function dayEnd(value: string) {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
+function Count({ n, capped }: { n: number; capped?: boolean }) {
+  return <span className="font-normal text-muted">({n}{capped ? "+" : ""})</span>;
+}
+
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Params> }) {
   await requireUser();
   const sp = await searchParams;
@@ -28,7 +33,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const typeId = one(sp.type);
   const from = DATE.test(one(sp.from)) ? one(sp.from) : "";
   const to = DATE.test(one(sp.to)) ? one(sp.to) : "";
-  const searching = Boolean(q || eventId || itemId || typeId || from || to);
+  const filterCount = [eventId, itemId, typeId, from, to].filter(Boolean).length;
+  const searching = Boolean(q) || filterCount > 0;
 
   const [events, items, types] = await Promise.all([
     prisma.event.findMany({ where: { deletedAt: null }, orderBy: { createdAt: "desc" } }),
@@ -82,7 +88,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           ? prisma.serialUnit.findMany({
               where: serialWhere,
               orderBy: { serialNumber: "asc" },
-              take: 50,
+              take: 30,
               include: { item: true, receipt: { include: { event: true } }, distribution: { include: { event: true, recipientType: true } } },
             })
           : Promise.resolve([]),
@@ -103,109 +109,143 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       ])
     : [[], [], []];
 
-  return (
-    <PageShell eyebrow="Find" title="Search" description="Look up a serial number to see exactly who received that unit, or search by name, roll number, source or remarks.">
+  const total = serials.length + distributions.length + receipts.length;
 
-      <form method="get" className={`${cardClass} space-y-3`}>
-        <div>
-          <label className={labelClass}>Search for a serial number, person, roll number, source, remarks...</label>
-          <input name="q" defaultValue={q} maxLength={100} autoFocus className={inputClass} />
+  return (
+    <PageShell
+      eyebrow="Find"
+      title="Search"
+      description="Look up a serial number to see exactly who received that unit, or search by name, roll number, source or remarks."
+    >
+      <form method="get" className="space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            <input
+              name="q"
+              defaultValue={q}
+              maxLength={100}
+              autoFocus
+              placeholder="Serial number, name, roll number, source..."
+              className={`${inputClass} py-3.5 pl-11 text-base`}
+            />
+          </div>
+          <button type="submit" className={`${buttonClass} px-8 py-3.5`}>Search</button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-5">
-          <div>
-            <label className={labelClass}>Event</label>
-            <select name="event" defaultValue={eventId} className={inputClass}>
-              <option value="">Any</option>
-              {events.map((e) => <option key={e.id} value={e.id}>{e.name} ({e.academicYear})</option>)}
-            </select>
+
+        <details open={filterCount > 0} className="group rounded-2xl border border-line bg-surface">
+          <summary className="flex cursor-pointer items-center justify-between px-5 py-3 text-sm font-medium">
+            <span>
+              Filters
+              {filterCount > 0 && <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">{filterCount} active</span>}
+            </span>
+            <span aria-hidden className="text-muted transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="grid gap-4 border-t border-line p-5 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <label className={labelClass}>Event</label>
+              <select name="event" defaultValue={eventId} className={inputClass}>
+                <option value="">Any event</option>
+                {events.map((e) => <option key={e.id} value={e.id}>{e.name} ({e.academicYear})</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Item</label>
+              <select name="item" defaultValue={itemId} className={inputClass}>
+                <option value="">Any item</option>
+                {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Recipient type</label>
+              <select name="type" defaultValue={typeId} className={inputClass}>
+                <option value="">Any type</option>
+                {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>From date</label>
+              <input name="from" type="date" defaultValue={from} className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>To date</label>
+              <input name="to" type="date" defaultValue={to} className={inputClass} />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Item</label>
-            <select name="item" defaultValue={itemId} className={inputClass}>
-              <option value="">Any</option>
-              {items.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelClass}>Recipient type</label>
-            <select name="type" defaultValue={typeId} className={inputClass}>
-              <option value="">Any</option>
-              {types.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className={labelClass}>From</label>
-            <input name="from" type="date" defaultValue={from} className={inputClass} />
-          </div>
-          <div>
-            <label className={labelClass}>To</label>
-            <input name="to" type="date" defaultValue={to} className={inputClass} />
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <button type="submit" className={buttonClass}>Search</button>
-          <a href="/search" className="text-sm underline">Clear</a>
-        </div>
+        </details>
+        {searching && <a href="/search" className="inline-block text-sm text-muted underline hover:text-foreground">Clear search</a>}
       </form>
 
-      {!searching && <p className="text-sm text-muted">Type something or pick a filter. A serial number search shows exactly who received that unit.</p>}
+      {!searching && (
+        <p className={emptyClass}>
+          Start typing above. Searching for a serial number shows the item, where it came from and who it was given to.
+        </p>
+      )}
+      {searching && total === 0 && <p className={emptyClass}>No results. Try fewer words or remove a filter.</p>}
 
-      {searching && q && (
-        <section>
-          <h2 className="mb-2 text-lg font-semibold tracking-tight">Serial numbers ({serials.length})</h2>
-          <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-            <table className={tableClass}>
-              <thead>
-                <tr>
-                  <th className={thClass}>Serial</th><th className={thClass}>Item</th><th className={thClass}>Status</th>
-                  <th className={thClass}>Received</th><th className={thClass}>Given to</th>
-                </tr>
-              </thead>
-              <tbody>
-                {serials.length === 0 && <tr><td className={tdClass} colSpan={5}>No serial number matches.</td></tr>}
-                {serials.map((u) => (
-                  <tr key={u.id}>
-                    <td className={`${tdClass} font-mono`}>{u.serialNumber}</td>
-                    <td className={tdClass}>{u.item.name}</td>
-                    <td className={tdClass}><span className={u.status === "IN_STOCK" ? pillGreen : pillBlue}>{u.status === "IN_STOCK" ? "In stock" : "Distributed"}</span></td>
-                    <td className={tdClass}>{u.receipt.event.name}, from {u.receipt.receivedFrom}<br /><span className="text-muted">{formatDateTime(u.receipt.receivedAt)}</span></td>
-                    <td className={tdClass}>
+      {serials.length > 0 && (
+        <section className="space-y-3">
+          <h2 className={sectionTitleClass}>Serial numbers <Count n={serials.length} /></h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {serials.map((u) => (
+              <div key={u.id} className={`${cardClass} space-y-4`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-lg font-semibold">{u.serialNumber}</p>
+                    <p className="text-sm text-muted">{u.item.name}</p>
+                  </div>
+                  <span className={u.status === "IN_STOCK" ? pillGreen : pillBlue}>{u.status === "IN_STOCK" ? "In stock" : "Distributed"}</span>
+                </div>
+                <dl className="space-y-3 text-sm">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-muted">Received</dt>
+                    <dd>{u.receipt.event.name} · from {u.receipt.receivedFrom}<br /><span className="text-muted">{formatDateTime(u.receipt.receivedAt)}</span></dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-muted">Given to</dt>
+                    <dd>
                       {u.distribution ? (
                         <>
                           {[u.distribution.recipientName, u.distribution.rollNumber, u.distribution.recipientType?.name].filter(Boolean).join(" · ")}
-                          <br /><span className="text-muted">{u.distribution.event.name}, {formatDateTime(u.distribution.distributedAt)}</span>
+                          <br /><span className="text-muted">{u.distribution.event.name} · {formatDateTime(u.distribution.distributedAt)}</span>
                         </>
-                      ) : "-"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      ) : (
+                        <span className="text-muted">Still in stock</span>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
           </div>
         </section>
       )}
 
-      {searching && (
-        <section>
-          <h2 className="mb-2 text-lg font-semibold tracking-tight">Distributions ({distributions.length}{distributions.length === LIMIT ? "+, showing the latest 100" : ""})</h2>
+      {distributions.length > 0 && (
+        <section className="space-y-3">
+          <h2 className={sectionTitleClass}>Distributions <Count n={distributions.length} capped={distributions.length === LIMIT} /></h2>
           <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
             <table className={tableClass}>
               <thead>
                 <tr>
-                  <th className={thClass}>When</th><th className={thClass}>Event</th><th className={thClass}>Item</th>
-                  <th className={thClass}>Qty / serials</th><th className={thClass}>To</th><th className={thClass}>Remarks</th>
+                  <th className={thClass}>When</th><th className={thClass}>Item</th><th className={thClass}>Qty / serials</th>
+                  <th className={thClass}>Recipient</th><th className={thClass}>Event</th>
                 </tr>
               </thead>
               <tbody>
-                {distributions.length === 0 && <tr><td className={tdClass} colSpan={6}>No distributions match.</td></tr>}
                 {distributions.map((d) => (
                   <tr key={d.id}>
-                    <td className={tdClass}>{formatDateTime(d.distributedAt)}</td>
-                    <td className={tdClass}>{d.event.name}</td>
+                    <td className={`${tdClass} whitespace-nowrap`}>{formatDateTime(d.distributedAt)}</td>
                     <td className={tdClass}>{d.item.name}</td>
-                    <td className={tdClass}>{d.serials.length ? d.serials.map((s) => s.serialNumber).join(", ") : d.quantity}</td>
-                    <td className={tdClass}>{[d.recipientName, d.rollNumber, d.recipientType?.name].filter(Boolean).join(" · ") || "-"}</td>
-                    <td className={tdClass}>{d.remarks ?? ""}</td>
+                    <td className={tdClass}>{d.serials.length ? <SerialChips serials={d.serials.map((s) => s.serialNumber)} limit={3} /> : d.quantity}</td>
+                    <td className={tdClass}>
+                      {[d.recipientName, d.rollNumber, d.recipientType?.name].filter(Boolean).join(" · ") || <span className="text-muted">-</span>}
+                      {d.remarks && <p className="text-xs text-muted">{d.remarks}</p>}
+                    </td>
+                    <td className={tdClass}>{d.event.name}</td>
                   </tr>
                 ))}
               </tbody>
@@ -214,27 +254,28 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         </section>
       )}
 
-      {searching && !typeId && (
-        <section>
-          <h2 className="mb-2 text-lg font-semibold tracking-tight">Goods received ({receipts.length}{receipts.length === LIMIT ? "+, showing the latest 100" : ""})</h2>
+      {receipts.length > 0 && (
+        <section className="space-y-3">
+          <h2 className={sectionTitleClass}>Goods received <Count n={receipts.length} capped={receipts.length === LIMIT} /></h2>
           <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
             <table className={tableClass}>
               <thead>
                 <tr>
-                  <th className={thClass}>When</th><th className={thClass}>Event</th><th className={thClass}>Item</th>
-                  <th className={thClass}>Qty / serials</th><th className={thClass}>From</th><th className={thClass}>Remarks</th>
+                  <th className={thClass}>When</th><th className={thClass}>Item</th><th className={thClass}>Qty / serials</th>
+                  <th className={thClass}>From</th><th className={thClass}>Event</th>
                 </tr>
               </thead>
               <tbody>
-                {receipts.length === 0 && <tr><td className={tdClass} colSpan={6}>No receipts match.</td></tr>}
                 {receipts.map((r) => (
                   <tr key={r.id}>
-                    <td className={tdClass}>{formatDateTime(r.receivedAt)}</td>
-                    <td className={tdClass}>{r.event.name}</td>
+                    <td className={`${tdClass} whitespace-nowrap`}>{formatDateTime(r.receivedAt)}</td>
                     <td className={tdClass}>{r.item.name}</td>
-                    <td className={tdClass}>{r.serials.length ? r.serials.map((s) => s.serialNumber).join(", ") : r.quantity}</td>
-                    <td className={tdClass}>{r.receivedFrom}</td>
-                    <td className={tdClass}>{r.remarks ?? ""}</td>
+                    <td className={tdClass}>{r.serials.length ? <SerialChips serials={r.serials.map((s) => s.serialNumber)} limit={3} /> : r.quantity}</td>
+                    <td className={tdClass}>
+                      {r.receivedFrom}
+                      {r.remarks && <p className="text-xs text-muted">{r.remarks}</p>}
+                    </td>
+                    <td className={tdClass}>{r.event.name}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { can, ROLE_LABELS } from "@/lib/permissions";
+import { ROLE_LABELS } from "@/lib/permissions";
 import { getStockByItem } from "@/lib/stock";
 import PageShell from "@/components/page-shell";
-import { cardClass, eyebrowClass, pillBlue, pillGray } from "../ui";
+import { cardClass, eyebrowClass } from "../ui";
 
 const ACTIONS = [
   { href: "/receive", eyebrow: "Stock in", title: "Receive goods", text: "Record items that arrive for an event." },
@@ -23,14 +23,6 @@ export default async function Dashboard() {
     ["Units distributed", distributed],
     ["Units in stock", received - distributed],
   ];
-  const abilities = [
-    ["Add goods received and distribute items", can(user.role, "records:create")],
-    ["Edit or delete past records", can(user.role, "records:edit")],
-    ["Create events and items", can(user.role, "catalogue:manage")],
-    ["View the audit log", can(user.role, "audit:view")],
-    ["Download data as CSV", can(user.role, "records:export")],
-    ["Manage accounts", can(user.role, "accounts:manage")],
-  ] as const;
 
   return (
     <PageShell eyebrow={ROLE_LABELS[user.role]} title={`Welcome, ${user.name}`} description="Everything the chapter has received and given out, in one place.">
@@ -56,17 +48,6 @@ export default async function Dashboard() {
         ))}
       </section>
 
-      <section className={cardClass}>
-        <h2 className="mb-4 text-lg font-semibold tracking-tight">What you can do</h2>
-        <ul className="space-y-2.5 text-sm">
-          {abilities.map(([label, allowed]) => (
-            <li key={label} className="flex items-center gap-3">
-              <span className={`${allowed ? pillBlue : pillGray} w-12 justify-center`}>{allowed ? "Yes" : "No"}</span>
-              <span className={allowed ? "" : "text-muted"}>{label}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </PageShell>
   );
 }

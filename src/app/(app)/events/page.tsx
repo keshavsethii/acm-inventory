@@ -1,10 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/auth";
-import { currentAcademicYear, toDateInput } from "@/lib/format";
+import { currentAcademicYear, formatDate, toDateInput } from "@/lib/format";
 import ActionForm from "@/components/action-form";
-import { cardClass, inputClass, labelClass } from "../../ui";
-import { removeEvent, saveEvent } from "./actions";
+import ExpandableRow from "@/components/expandable-row";
 import PageShell from "@/components/page-shell";
+import { cardClass, emptyClass, inputClass, labelClass, sectionTitleClass } from "../../ui";
+import { removeEvent, saveEvent } from "./actions";
 
 function EventFields(props: { id?: string; name?: string; date?: string; year: string }) {
   return (
@@ -33,29 +34,47 @@ export default async function EventsPage() {
   return (
     <PageShell eyebrow="Catalogue" title="Events" description="The events that goods are received for and given out at.">
       <section className={cardClass}>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">Add an event</h2>
+        <h2 className={`${sectionTitleClass} mb-4`}>Add an event</h2>
         <ActionForm action={saveEvent} submitLabel="Add event">
           <EventFields year={currentAcademicYear()} />
         </ActionForm>
       </section>
+
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold tracking-tight">All events ({events.length})</h2>
-        {events.length === 0 && <p className="text-sm text-muted">No events yet.</p>}
+        <h2 className={sectionTitleClass}>All events <span className="font-normal text-muted">({events.length})</span></h2>
+        {events.length === 0 && <p className={emptyClass}>No events yet. Add the first one above.</p>}
         {events.map((e) => (
-          <div key={e.id} className={cardClass}>
-            <ActionForm action={saveEvent} submitLabel="Save">
-              <EventFields id={e.id} name={e.name} date={toDateInput(e.eventDate)} year={e.academicYear} />
-            </ActionForm>
-            <details className="mt-3 text-sm">
-              <summary className="cursor-pointer text-danger">Remove event</summary>
-              <div className="mt-2">
-                <ActionForm action={removeEvent} submitLabel="Confirm remove">
-                  <input type="hidden" name="id" value={e.id} />
-                  <p className="text-muted">Only possible when the event has no records.</p>
-                </ActionForm>
-              </div>
-            </details>
-          </div>
+          <ExpandableRow
+            key={e.id}
+            summary={
+              <>
+                <p className="font-semibold">{e.name}</p>
+                <p className="mt-0.5 text-sm text-muted">{e.eventDate ? `${formatDate(e.eventDate)} · ` : ""}Academic year {e.academicYear}</p>
+              </>
+            }
+            actions={[
+              {
+                key: "edit",
+                label: "Edit",
+                panel: (
+                  <ActionForm action={saveEvent} submitLabel="Save changes">
+                    <EventFields id={e.id} name={e.name} date={toDateInput(e.eventDate)} year={e.academicYear} />
+                  </ActionForm>
+                ),
+              },
+              {
+                key: "remove",
+                label: "Remove",
+                tone: "danger",
+                panel: (
+                  <ActionForm action={removeEvent} submitLabel="Remove event" tone="danger">
+                    <input type="hidden" name="id" value={e.id} />
+                    <p className="text-sm text-muted">Removing is only possible when the event has no records. This cannot be undone from the app.</p>
+                  </ActionForm>
+                ),
+              },
+            ]}
+          />
         ))}
       </section>
     </PageShell>

@@ -11,8 +11,8 @@ type Params = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const PAGE_SIZE = 50;
 
-const ACTIONS = ["CREATE", "UPDATE", "DELETE", "EXPORT", "LOGIN", "LOGIN_FAILED", "LOGOUT", "PASSWORD_CHANGED", "ACCOUNT_UPDATED", "ACCOUNT_PASSWORD_RESET"];
-const ENTITIES = ["Receipt", "Distribution", "Event", "Item", "RecipientType", "User", "Export"];
+const ACTIONS = ["CREATE", "UPDATE", "DELETE", "EXPORT", "LOGIN", "LOGIN_FAILED", "LOGOUT", "PASSWORD_CHANGED", "ACCOUNT_UPDATED", "ACCOUNT_PASSWORD_RESET", "ACCESS_DENIED"];
+const ENTITIES = ["Receipt", "Distribution", "Event", "Item", "RecipientType", "User", "Export", "Permission"];
 
 // Event and recipient-type ids inside the details are shown as names.
 function collectIds(value: unknown, out: Set<string>) {

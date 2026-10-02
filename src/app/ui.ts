@@ -13,3 +13,16 @@ const pill = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-m
 export const pillBlue = `${pill} bg-primary/15 text-primary`;
 export const pillGreen = `${pill} bg-success/15 text-success`;
 export const pillGray = `${pill} bg-surface-2 text-muted`;
+
+// Small buttons used on rows (Edit, Delete, Reset password...).
+export function smallButton(tone: "default" | "danger" = "default", active = false) {
+  const base = "inline-flex items-center rounded-lg border px-3.5 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-primary/40";
+  if (tone === "danger") {
+    return `${base} ${active ? "border-danger bg-danger/15 text-danger" : "border-danger/40 text-danger hover:bg-danger/10"}`;
+  }
+  return `${base} ${active ? "border-primary bg-primary/15 text-primary" : "border-line bg-surface-2 hover:border-primary/60"}`;
+}
+export const dangerButtonClass =
+  "inline-flex items-center justify-center rounded-xl bg-danger px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-danger/40 disabled:opacity-50";
+export const emptyClass = "rounded-2xl border border-dashed border-line p-10 text-center text-sm text-muted";
+export const sectionTitleClass = "text-lg font-semibold tracking-tight";

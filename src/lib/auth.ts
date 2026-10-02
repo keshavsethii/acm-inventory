@@ -2,6 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
+import { logAudit } from "./audit";
 import { SESSION_COOKIE, readToken } from "./token";
 import { can, type Permission } from "./permissions";
 
@@ -25,6 +26,10 @@ export async function requireUser() {
 // Use at the top of every page and server action that needs a specific permission.
 export async function requirePermission(permission: Permission) {
   const user = await requireUser();
-  if (!can(user.role, permission)) redirect("/");
+  if (!can(user.role, permission)) {
+    // Not allowed: record the attempt and show an explanation instead of the page.
+    await logAudit({ userId: user.id, action: "ACCESS_DENIED", entityType: "Permission", entityId: permission, details: { tried: permission } });
+    redirect(`/denied?for=${encodeURIComponent(permission)}`);
+  }
   return user;
 }

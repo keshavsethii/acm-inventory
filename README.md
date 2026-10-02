@@ -61,6 +61,8 @@ Run `npm run db:seed` after filling the `SEED_PASSWORD_*` values. It creates fiv
 
 All of this lives in `src/lib/permissions.ts`.
 
+Controls a role cannot use are hidden. If someone opens a restricted page by typing its address, they see an "Access restricted" page and the attempt is recorded in the audit log as ACCESS_DENIED.
+
 - Sessions last 12 hours. An account is locked for 15 minutes after 5 wrong passwords.
 - Forgotten password: Chair or Vice Chair resets it on the Accounts page. If the Chair and Vice Chair are both locked out, set the `SEED_PASSWORD_*` value and run `npm run db:seed -- --reset-passwords`.
 

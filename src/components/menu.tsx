@@ -8,6 +8,8 @@ export default function Menu(props: {
   children: React.ReactNode;
   align?: "left" | "right";
   className?: string;
+  summaryClassName?: string;
+  ariaLabel?: string;
 }) {
   const ref = useRef<HTMLDetailsElement>(null);
 
@@ -28,7 +30,10 @@ export default function Menu(props: {
 
   return (
     <details ref={ref} className={`relative ${props.className ?? ""}`}>
-      <summary className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-foreground">
+      <summary
+        aria-label={props.ariaLabel}
+        className={props.summaryClassName ?? "flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition hover:bg-surface-2 hover:text-foreground"}
+      >
         {props.label}
       </summary>
       <div
