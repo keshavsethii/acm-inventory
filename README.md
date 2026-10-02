@@ -111,6 +111,18 @@ Rules built into the design:
 | `npm run db:seed` | Add the default recipient types (Winner, Participant, Organizer) |
 | `npm run db:deploy` | Apply existing migrations (production) |
 | `npm run db:studio` | Open Prisma Studio to browse the data |
+| `npm test` | Run the automated checks for the helper code |
+| `npm run db:backup` | Save a full database backup to `backups/` (needs `pg_dump`) |
+
+## Look and feel
+
+The design follows the chapter website: dark by default with a light option (sun/moon button in the header, remembered per browser), blue accents, rounded cards and the Inter font. Colours live in one place, `src/app/globals.css`. To use the chapter's real logo, replace `public/logo.svg` (same file name), or change the path in `src/components/logo.tsx`.
+
+## Guides
+
+- [`docs/TESTING.md`](docs/TESTING.md): full test checklist to run before launch
+- [`docs/HANDOVER.md`](docs/HANDOVER.md): yearly rollover, forgotten passwords, backups and restore, known limits
+- [`docs/DEPLOY.md`](docs/DEPLOY.md): putting the app online (optional)
 
 ## Build phases
 
@@ -120,4 +132,4 @@ Rules built into the design:
 - [x] Phase 3: Core screens
 - [x] Phase 4: Safety rules
 - [x] Phase 5: Search, audit log, export
-- [ ] Phase 6: Testing and handover
+- [x] Phase 6: Testing and handover

@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { formatDateTime } from "@/lib/format";
 import { buttonClass, cardClass, inputClass, labelClass, tableClass, tdClass, thClass } from "../../ui";
+import PageShell from "@/components/page-shell";
 
 type Params = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -89,11 +90,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Audit log</h1>
-        <p className="text-sm text-zinc-500">Every login, entry, edit, delete and export. Entries cannot be changed or removed from the app.</p>
-      </div>
+    <PageShell eyebrow="Transparency" title="Audit log" description="Every login, entry, edit, delete and export. Entries cannot be changed or removed from the app.">
 
       <form method="get" className={`${cardClass} grid gap-3 sm:grid-cols-4 sm:items-end`}>
         <div>
@@ -123,7 +120,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         </div>
       </form>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+      <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
         <table className={tableClass}>
           <thead>
             <tr><th className={thClass}>When</th><th className={thClass}>Who</th><th className={thClass}>Action</th><th className={thClass}>About</th><th className={thClass}>Details</th></tr>
@@ -133,7 +130,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             {entries.map((e) => (
               <tr key={e.id}>
                 <td className={`${tdClass} whitespace-nowrap`}>{formatDateTime(e.createdAt)}</td>
-                <td className={tdClass}>{e.user.name} <span className="text-xs text-zinc-500">({ROLE_LABELS[e.user.role]})</span></td>
+                <td className={tdClass}>{e.user.name} <span className="text-xs text-muted">({ROLE_LABELS[e.user.role]})</span></td>
                 <td className={tdClass}>{e.action}</td>
                 <td className={tdClass}>{e.entityType}</td>
                 <td className={`${tdClass} break-words`}>{describe(e.details, names)}</td>
@@ -144,12 +141,12 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="flex items-center justify-between text-sm">
-        <span className="text-zinc-500">{total} entries, page {page} of {pages}</span>
+        <span className="text-muted">{total} entries, page {page} of {pages}</span>
         <div className="flex gap-4">
           {page > 1 && <Link href={link(page - 1)} className="underline">Newer</Link>}
           {page < pages && <Link href={link(page + 1)} className="underline">Older</Link>}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }

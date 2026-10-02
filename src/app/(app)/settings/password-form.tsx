@@ -21,8 +21,8 @@ export default function PasswordForm() {
         <label htmlFor="confirm" className={labelClass}>Confirm new password</label>
         <input id="confirm" name="confirm" type="password" autoComplete="new-password" required className={inputClass} />
       </div>
-      {state.error && <p className="text-sm text-red-600" role="alert">{state.error}</p>}
-      {state.success && <p className="text-sm text-green-700">Password updated.</p>}
+      {state.error && <p className="text-sm text-danger" role="alert">{state.error}</p>}
+      {state.success && <p className="text-sm text-success">Password updated.</p>}
       <button type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Saving..." : "Change password"}
       </button>

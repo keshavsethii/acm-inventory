@@ -2,17 +2,22 @@
 
 import { useActionState } from "react";
 import { updateAccount, type AccountState } from "./actions";
-import { buttonClass, inputClass, labelClass } from "../../ui";
+import Avatar from "@/components/avatar";
+import { buttonClass, cardClass, eyebrowClass, inputClass, labelClass } from "../../ui";
 
 export default function AccountForm(props: { userId: string; name: string; username: string; roleLabel: string }) {
   const [state, action, pending] = useActionState<AccountState, FormData>(updateAccount, {});
 
   return (
-    <form action={action} className="rounded-lg border border-zinc-200 bg-white p-4">
+    <form action={action} className={cardClass}>
       <input type="hidden" name="userId" value={props.userId} />
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="font-medium">{props.roleLabel}</h2>
-        <span className="text-sm text-zinc-500">username: {props.username}</span>
+      <div className="mb-5 flex flex-wrap items-center gap-4">
+        <Avatar name={props.name} size="lg" />
+        <div>
+          <p className="text-lg font-semibold">{props.name}</p>
+          <p className={eyebrowClass}>{props.roleLabel}</p>
+        </div>
+        <span className="text-sm text-muted sm:ml-auto">username: <span className="font-mono text-foreground">{props.username}</span></span>
       </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <div>
@@ -25,8 +30,8 @@ export default function AccountForm(props: { userId: string; name: string; usern
         </div>
         <button type="submit" disabled={pending} className={buttonClass}>{pending ? "Saving..." : "Save"}</button>
       </div>
-      {state.error && <p className="mt-2 text-sm text-red-600" role="alert">{state.error}</p>}
-      {state.success && <p className="mt-2 text-sm text-green-700">{state.success}</p>}
+      {state.error && <p className="mt-2 text-sm text-danger" role="alert">{state.error}</p>}
+      {state.success && <p className="mt-2 text-sm text-success">{state.success}</p>}
     </form>
   );
 }

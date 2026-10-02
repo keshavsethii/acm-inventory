@@ -2,7 +2,8 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { formatDateTime } from "@/lib/format";
-import { buttonClass, cardClass, inputClass, labelClass, tableClass, tdClass, thClass } from "../../ui";
+import { buttonClass, cardClass, inputClass, labelClass, pillBlue, pillGreen, tableClass, tdClass, thClass } from "../../ui";
+import PageShell from "@/components/page-shell";
 
 type Params = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
@@ -103,8 +104,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     : [[], [], []];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Search</h1>
+    <PageShell eyebrow="Find" title="Search" description="Look up a serial number to see exactly who received that unit, or search by name, roll number, source or remarks.">
 
       <form method="get" className={`${cardClass} space-y-3`}>
         <div>
@@ -148,12 +148,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         </div>
       </form>
 
-      {!searching && <p className="text-sm text-zinc-500">Type something or pick a filter. A serial number search shows exactly who received that unit.</p>}
+      {!searching && <p className="text-sm text-muted">Type something or pick a filter. A serial number search shows exactly who received that unit.</p>}
 
       {searching && q && (
         <section>
-          <h2 className="mb-2 font-medium">Serial numbers ({serials.length})</h2>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+          <h2 className="mb-2 text-lg font-semibold tracking-tight">Serial numbers ({serials.length})</h2>
+          <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
             <table className={tableClass}>
               <thead>
                 <tr>
@@ -167,13 +167,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                   <tr key={u.id}>
                     <td className={`${tdClass} font-mono`}>{u.serialNumber}</td>
                     <td className={tdClass}>{u.item.name}</td>
-                    <td className={tdClass}>{u.status === "IN_STOCK" ? "In stock" : "Distributed"}</td>
-                    <td className={tdClass}>{u.receipt.event.name}, from {u.receipt.receivedFrom}<br /><span className="text-zinc-500">{formatDateTime(u.receipt.receivedAt)}</span></td>
+                    <td className={tdClass}><span className={u.status === "IN_STOCK" ? pillGreen : pillBlue}>{u.status === "IN_STOCK" ? "In stock" : "Distributed"}</span></td>
+                    <td className={tdClass}>{u.receipt.event.name}, from {u.receipt.receivedFrom}<br /><span className="text-muted">{formatDateTime(u.receipt.receivedAt)}</span></td>
                     <td className={tdClass}>
                       {u.distribution ? (
                         <>
                           {[u.distribution.recipientName, u.distribution.rollNumber, u.distribution.recipientType?.name].filter(Boolean).join(" · ")}
-                          <br /><span className="text-zinc-500">{u.distribution.event.name}, {formatDateTime(u.distribution.distributedAt)}</span>
+                          <br /><span className="text-muted">{u.distribution.event.name}, {formatDateTime(u.distribution.distributedAt)}</span>
                         </>
                       ) : "-"}
                     </td>
@@ -187,8 +187,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
       {searching && (
         <section>
-          <h2 className="mb-2 font-medium">Distributions ({distributions.length}{distributions.length === LIMIT ? "+, showing the latest 100" : ""})</h2>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+          <h2 className="mb-2 text-lg font-semibold tracking-tight">Distributions ({distributions.length}{distributions.length === LIMIT ? "+, showing the latest 100" : ""})</h2>
+          <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
             <table className={tableClass}>
               <thead>
                 <tr>
@@ -216,8 +216,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
 
       {searching && !typeId && (
         <section>
-          <h2 className="mb-2 font-medium">Goods received ({receipts.length}{receipts.length === LIMIT ? "+, showing the latest 100" : ""})</h2>
-          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+          <h2 className="mb-2 text-lg font-semibold tracking-tight">Goods received ({receipts.length}{receipts.length === LIMIT ? "+, showing the latest 100" : ""})</h2>
+          <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
             <table className={tableClass}>
               <thead>
                 <tr>
@@ -242,6 +242,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           </div>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }

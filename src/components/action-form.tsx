@@ -26,8 +26,8 @@ export default function ActionForm(props: {
       }}
     >
       {props.children}
-      {state.error && <p className="text-sm text-red-600" role="alert">{state.error}</p>}
-      {state.success && <p className="text-sm text-green-700">{state.success}</p>}
+      {state.error && <p className="text-sm text-danger" role="alert">{state.error}</p>}
+      {state.success && <p className="text-sm text-success">{state.success}</p>}
       <button type="submit" disabled={pending} className={buttonClass}>
         {pending ? "Saving..." : props.submitLabel}
       </button>

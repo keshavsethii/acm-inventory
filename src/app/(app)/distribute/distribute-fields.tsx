@@ -65,7 +65,7 @@ export default function DistributeFields({ events, items, types, serialsByItem }
             onChange={(e) => setFilter(e.target.value)}
             className={`${inputClass} mb-2`}
           />
-          <div className="max-h-48 space-y-1 overflow-y-auto rounded-md border border-zinc-200 p-2">
+          <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-line p-2">
             {available.map((s) => (
               <label
                 key={s}

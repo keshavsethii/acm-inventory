@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth";
 import ActionForm from "@/components/action-form";
 import { cardClass, inputClass, labelClass } from "../../ui";
 import { addRecipientType, removeItem, saveItem, toggleRecipientType } from "./actions";
+import PageShell from "@/components/page-shell";
 
 function ItemFields(props: { id?: string; name?: string; description?: string | null; hasSerial?: boolean; locked?: boolean }) {
   return (
@@ -19,7 +20,7 @@ function ItemFields(props: { id?: string; name?: string; description?: string | 
       <label className="flex items-center gap-2 pb-2 text-sm">
         <input type="checkbox" name="hasSerial" defaultChecked={props.hasSerial} disabled={props.locked} />
         Has serial numbers
-        {props.locked && <span className="text-xs text-zinc-400">(locked: goods already received)</span>}
+        {props.locked && <span className="text-xs text-muted/60">(locked: goods already received)</span>}
       </label>
     </div>
   );
@@ -35,29 +36,28 @@ export default async function ItemsPage() {
   const used = new Set(receiptCounts.map((r) => r.itemId));
 
   return (
-    <div className="space-y-8">
+    <PageShell eyebrow="Catalogue" title="Items" description="What the chapter keeps track of, and which items carry serial numbers.">
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Items</h1>
         <section className={cardClass}>
-          <h2 className="mb-3 font-medium">Add an item</h2>
+          <h2 className="mb-3 text-lg font-semibold tracking-tight">Add an item</h2>
           <ActionForm action={saveItem} submitLabel="Add item">
             <ItemFields />
           </ActionForm>
         </section>
         <section className="space-y-3">
-          <h2 className="font-medium">All items ({items.length})</h2>
-          {items.length === 0 && <p className="text-sm text-zinc-500">No items yet.</p>}
+          <h2 className="text-lg font-semibold tracking-tight">All items ({items.length})</h2>
+          {items.length === 0 && <p className="text-sm text-muted">No items yet.</p>}
           {items.map((i) => (
             <div key={i.id} className={cardClass}>
               <ActionForm action={saveItem} submitLabel="Save">
                 <ItemFields id={i.id} name={i.name} description={i.description} hasSerial={i.hasSerial} locked={used.has(i.id)} />
               </ActionForm>
               <details className="mt-3 text-sm">
-                <summary className="cursor-pointer text-red-700">Remove item</summary>
+                <summary className="cursor-pointer text-danger">Remove item</summary>
                 <div className="mt-2">
                   <ActionForm action={removeItem} submitLabel="Confirm remove">
                     <input type="hidden" name="id" value={i.id} />
-                    <p className="text-zinc-500">Only possible when the item has no records.</p>
+                    <p className="text-muted">Only possible when the item has no records.</p>
                   </ActionForm>
                 </div>
               </details>
@@ -68,7 +68,7 @@ export default async function ItemsPage() {
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold">Recipient types</h2>
-        <p className="text-sm text-zinc-500">These fill the dropdown on the Distribute form. Hiding one keeps old records intact.</p>
+        <p className="text-sm text-muted">These fill the dropdown on the Distribute form. Hiding one keeps old records intact.</p>
         <div className={cardClass}>
           <ActionForm action={addRecipientType} submitLabel="Add type" className="flex flex-wrap items-end gap-3">
             <div>
@@ -80,7 +80,7 @@ export default async function ItemsPage() {
         <ul className="space-y-2">
           {types.map((t) => (
             <li key={t.id} className={`${cardClass} flex items-center justify-between py-2`}>
-              <span className={t.isActive ? "" : "text-zinc-400 line-through"}>{t.name}</span>
+              <span className={t.isActive ? "" : "text-muted/60 line-through"}>{t.name}</span>
               <form action={toggleRecipientType.bind(null, t.id)}>
                 <button className="text-sm underline">{t.isActive ? "Hide" : "Show"}</button>
               </form>
@@ -88,6 +88,6 @@ export default async function ItemsPage() {
           ))}
         </ul>
       </section>
-    </div>
+    </PageShell>
   );
 }

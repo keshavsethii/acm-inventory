@@ -17,7 +17,7 @@ export default function LoginForm() {
         <label htmlFor="password" className={labelClass}>Password</label>
         <input id="password" name="password" type="password" autoComplete="current-password" required className={inputClass} />
       </div>
-      {state.error && <p className="text-sm text-red-600" role="alert">{state.error}</p>}
+      {state.error && <p className="text-sm text-danger" role="alert">{state.error}</p>}
       <button type="submit" disabled={pending} className={`${buttonClass} w-full`}>
         {pending ? "Signing in..." : "Sign in"}
       </button>

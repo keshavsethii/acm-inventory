@@ -1,9 +1,28 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { can, ROLE_LABELS } from "@/lib/permissions";
+import { getStockByItem } from "@/lib/stock";
+import PageShell from "@/components/page-shell";
+import { cardClass, eyebrowClass, pillBlue, pillGray } from "../ui";
+
+const ACTIONS = [
+  { href: "/receive", eyebrow: "Stock in", title: "Receive goods", text: "Record items that arrive for an event." },
+  { href: "/distribute", eyebrow: "Stock out", title: "Distribute goods", text: "Hand items to winners, participants and organizers." },
+  { href: "/search", eyebrow: "Find", title: "Search", text: "Look up a serial number, person or roll number." },
+  { href: "/stock", eyebrow: "Overview", title: "Stock", text: "What came in, what went out and what is left." },
+];
 
 export default async function Dashboard() {
   const user = await requireUser();
+  const stock = await getStockByItem();
+  const received = stock.reduce((sum, i) => sum + i.received, 0);
+  const distributed = stock.reduce((sum, i) => sum + i.distributed, 0);
+  const tiles = [
+    ["Items tracked", stock.length],
+    ["Units received", received],
+    ["Units distributed", distributed],
+    ["Units in stock", received - distributed],
+  ];
   const abilities = [
     ["Add goods received and distribute items", can(user.role, "records:create")],
     ["Edit or delete past records", can(user.role, "records:edit")],
@@ -14,26 +33,40 @@ export default async function Dashboard() {
   ] as const;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Welcome, {user.name}</h1>
-        <p className="text-sm text-zinc-500">Signed in as {ROLE_LABELS[user.role]}</p>
-      </div>
-      <section className="rounded-lg border border-zinc-200 bg-white p-5">
-        <h2 className="mb-3 font-medium">What you can do</h2>
-        <ul className="space-y-1 text-sm">
+    <PageShell eyebrow={ROLE_LABELS[user.role]} title={`Welcome, ${user.name}`} description="Everything the chapter has received and given out, in one place.">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map(([label, value]) => (
+          <div key={label} className={cardClass}>
+            <p className="text-4xl font-bold tracking-tight">{value}</p>
+            <p className="mt-1 text-sm text-muted">{label}</p>
+          </div>
+        ))}
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {ACTIONS.map((a) => (
+          <Link key={a.href} href={a.href} className={`group ${cardClass} transition hover:border-primary/60 hover:bg-surface-2`}>
+            <p className={eyebrowClass}>{a.eyebrow}</p>
+            <p className="mt-2 flex items-center justify-between text-xl font-semibold">
+              {a.title}
+              <span aria-hidden className="text-muted transition group-hover:translate-x-1 group-hover:text-primary">→</span>
+            </p>
+            <p className="mt-2 text-sm text-muted">{a.text}</p>
+          </Link>
+        ))}
+      </section>
+
+      <section className={cardClass}>
+        <h2 className="mb-4 text-lg font-semibold tracking-tight">What you can do</h2>
+        <ul className="space-y-2.5 text-sm">
           {abilities.map(([label, allowed]) => (
-            <li key={label} className={allowed ? "text-zinc-900" : "text-zinc-400 line-through"}>
-              {allowed ? "Yes" : "No"}: {label}
+            <li key={label} className="flex items-center gap-3">
+              <span className={`${allowed ? pillBlue : pillGray} w-12 justify-center`}>{allowed ? "Yes" : "No"}</span>
+              <span className={allowed ? "" : "text-muted"}>{label}</span>
             </li>
           ))}
         </ul>
       </section>
-      <div className="flex flex-wrap gap-3 text-sm">
-        <Link href="/receive" className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700">Receive goods</Link>
-        <Link href="/distribute" className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700">Distribute goods</Link>
-        <Link href="/stock" className="rounded-md border border-zinc-300 px-4 py-2 font-medium hover:bg-zinc-100">View stock</Link>
-      </div>
-    </div>
+    </PageShell>
   );
 }

@@ -10,8 +10,12 @@ export default function ExportLinks() {
   return (
     <div className="flex flex-wrap gap-2 text-sm">
       {EXPORTS.map(([kind, label]) => (
-        <a key={kind} href={`/api/export/${kind}`} className="rounded-md border border-zinc-300 px-3 py-1.5 hover:bg-zinc-100">
-          Download {label} (CSV)
+        <a
+          key={kind}
+          href={`/api/export/${kind}`}
+          className="rounded-xl border border-line bg-surface px-3.5 py-2 font-medium transition hover:border-primary/60 hover:bg-surface-2"
+        >
+          ↓ {label} (CSV)
         </a>
       ))}
     </div>

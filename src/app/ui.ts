@@ -1,10 +1,15 @@
-// Shared Tailwind class strings.
+// Shared Tailwind class strings. Colours come from the theme tokens in globals.css.
 export const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900";
+  "w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60";
 export const buttonClass =
-  "rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:opacity-50";
-export const labelClass = "mb-1 block text-sm font-medium text-zinc-700";
-export const cardClass = "rounded-lg border border-zinc-200 bg-white p-4";
+  "inline-flex items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-fg shadow-sm transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50";
+export const labelClass = "mb-1.5 block text-sm font-medium text-muted";
+export const cardClass = "rounded-2xl border border-line bg-surface p-5 sm:p-6";
+export const eyebrowClass = "text-xs font-semibold uppercase tracking-[0.15em] text-primary";
 export const tableClass = "w-full text-left text-sm";
-export const thClass = "border-b border-zinc-200 px-3 py-2 font-medium text-zinc-600";
-export const tdClass = "border-b border-zinc-100 px-3 py-2";
+export const thClass = "border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted";
+export const tdClass = "border-b border-line/60 px-4 py-3";
+const pill = "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium";
+export const pillBlue = `${pill} bg-primary/15 text-primary`;
+export const pillGreen = `${pill} bg-success/15 text-success`;
+export const pillGray = `${pill} bg-surface-2 text-muted`;

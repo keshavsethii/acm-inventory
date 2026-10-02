@@ -6,6 +6,7 @@ import ActionForm from "@/components/action-form";
 import { cardClass, tableClass, tdClass, thClass } from "../../ui";
 import { distributeGoods } from "./actions";
 import DistributeFields from "./distribute-fields";
+import PageShell from "@/components/page-shell";
 
 export default async function DistributePage() {
   await requirePermission("records:create");
@@ -30,10 +31,9 @@ export default async function DistributePage() {
   for (const u of units) (serialsByItem[u.itemId] ??= []).push(u.serialNumber);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Distribute goods</h1>
+    <PageShell eyebrow="Stock out" title="Distribute goods" description="Hand items to winners, participants and organizers. Serial numbers are tracked per person.">
       {events.length === 0 || stock.length === 0 ? (
-        <p className="text-sm text-zinc-500">An event and an item must exist first.</p>
+        <p className="text-sm text-muted">An event and an item must exist first.</p>
       ) : (
         <section className={`${cardClass} max-w-2xl`}>
           <ActionForm action={distributeGoods} submitLabel="Record distribution">
@@ -47,8 +47,8 @@ export default async function DistributePage() {
         </section>
       )}
       <section>
-        <h2 className="mb-2 font-medium">Recently distributed</h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <h2 className="mb-2 text-lg font-semibold tracking-tight">Recently distributed</h2>
+        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
           <table className={tableClass}>
             <thead>
               <tr>
@@ -76,6 +76,6 @@ export default async function DistributePage() {
           </table>
         </div>
       </section>
-    </div>
+    </PageShell>
   );
 }

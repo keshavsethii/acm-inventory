@@ -6,6 +6,7 @@ import ActionForm from "@/components/action-form";
 import ExportLinks from "@/components/export-links";
 import { cardClass, inputClass, labelClass } from "../../ui";
 import { deleteDistribution, deleteReceipt, updateDistribution, updateReceipt } from "./actions";
+import PageShell from "@/components/page-shell";
 
 type Option = { id: string; label: string };
 
@@ -21,9 +22,9 @@ function Select(props: { name: string; value: string; options: Option[]; allowNo
 function DeleteForm(props: { id: string; action: typeof deleteReceipt; hint: string }) {
   return (
     <details className="text-sm">
-      <summary className="cursor-pointer text-red-700">Delete</summary>
+      <summary className="cursor-pointer text-danger">Delete</summary>
       <div className="mt-2 max-w-md">
-        <p className="mb-2 text-zinc-500">{props.hint}</p>
+        <p className="mb-2 text-muted">{props.hint}</p>
         <ActionForm action={props.action} submitLabel="Confirm delete">
           <input type="hidden" name="id" value={props.id} />
           <div>
@@ -60,26 +61,19 @@ export default async function RecordsPage() {
   const eventOptions = events.map((e) => ({ id: e.id, label: `${e.name} (${e.academicYear})` }));
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Records</h1>
-        <p className="text-sm text-zinc-500">
-          Latest 50 of each. {canEdit ? "Deleted records are kept in the audit log, never erased." : "Only officers can edit or delete records."}
-        </p>
-      </div>
-      {can(user.role, "records:export") && <ExportLinks />}
+    <PageShell eyebrow="History" title="Records" description={<>Latest 50 of each. {canEdit ? "Deleted records are kept in the audit log, never erased." : "Only officers can edit or delete records."}</>} actions={can(user.role, "records:export") ? <ExportLinks /> : null}>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Goods received</h2>
-        {receipts.length === 0 && <p className="text-sm text-zinc-500">Nothing received yet.</p>}
+        <h2 className="text-lg font-semibold tracking-tight">Goods received</h2>
+        {receipts.length === 0 && <p className="text-sm text-muted">Nothing received yet.</p>}
         {receipts.map((r) => (
           <div key={r.id} className={`${cardClass} space-y-2`}>
             <div className="flex flex-wrap justify-between gap-2 text-sm">
               <span><b>{r.quantity} x {r.item.name}</b> from {r.receivedFrom}</span>
-              <span className="text-zinc-500">{r.event.name} · {formatDateTime(r.receivedAt)} · {r.createdBy.name}</span>
+              <span className="text-muted">{r.event.name} · {formatDateTime(r.receivedAt)} · {r.createdBy.name}</span>
             </div>
-            {r.serials.length > 0 && <p className="break-words font-mono text-xs text-zinc-600">{r.serials.map((s) => s.serialNumber).join(", ")}</p>}
-            {r.remarks && <p className="text-sm text-zinc-600">Remarks: {r.remarks}</p>}
+            {r.serials.length > 0 && <p className="break-words font-mono text-xs text-muted">{r.serials.map((s) => s.serialNumber).join(", ")}</p>}
+            {r.remarks && <p className="text-sm text-muted">Remarks: {r.remarks}</p>}
             {canEdit && (
               <details className="text-sm">
                 <summary className="cursor-pointer underline">Edit</summary>
@@ -106,8 +100,8 @@ export default async function RecordsPage() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-medium">Goods distributed</h2>
-        {distributions.length === 0 && <p className="text-sm text-zinc-500">Nothing distributed yet.</p>}
+        <h2 className="text-lg font-semibold tracking-tight">Goods distributed</h2>
+        {distributions.length === 0 && <p className="text-sm text-muted">Nothing distributed yet.</p>}
         {distributions.map((d) => {
           const typeOptions = types.filter((t) => t.isActive || t.id === d.recipientTypeId).map((t) => ({ id: t.id, label: t.name }));
           return (
@@ -117,10 +111,10 @@ export default async function RecordsPage() {
                   <b>{d.quantity} x {d.item.name}</b> to{" "}
                   {[d.recipientName, d.rollNumber, d.recipientType?.name].filter(Boolean).join(" · ") || "no recipient recorded"}
                 </span>
-                <span className="text-zinc-500">{d.event.name} · {formatDateTime(d.distributedAt)} · {d.createdBy.name}</span>
+                <span className="text-muted">{d.event.name} · {formatDateTime(d.distributedAt)} · {d.createdBy.name}</span>
               </div>
-              {d.serials.length > 0 && <p className="break-words font-mono text-xs text-zinc-600">{d.serials.map((s) => s.serialNumber).join(", ")}</p>}
-              {d.remarks && <p className="text-sm text-zinc-600">Remarks: {d.remarks}</p>}
+              {d.serials.length > 0 && <p className="break-words font-mono text-xs text-muted">{d.serials.map((s) => s.serialNumber).join(", ")}</p>}
+              {d.remarks && <p className="text-sm text-muted">Remarks: {d.remarks}</p>}
               {canEdit && (
                 <details className="text-sm">
                   <summary className="cursor-pointer underline">Edit</summary>
@@ -148,6 +142,6 @@ export default async function RecordsPage() {
           );
         })}
       </section>
-    </div>
+    </PageShell>
   );
 }

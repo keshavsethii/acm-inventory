@@ -2,46 +2,81 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { can, ROLE_LABELS } from "@/lib/permissions";
 import { logout } from "../login/actions";
+import Avatar from "@/components/avatar";
+import Footer from "@/components/footer";
+import Logo from "@/components/logo";
+import Menu from "@/components/menu";
+import NavLink from "@/components/nav-link";
+import ThemeToggle from "@/components/theme-toggle";
+
+const MAIN = [
+  ["/", "Dashboard"],
+  ["/receive", "Receive"],
+  ["/distribute", "Distribute"],
+  ["/stock", "Stock"],
+  ["/records", "Records"],
+  ["/search", "Search"],
+];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
 
+  const manage = [
+    can(user.role, "catalogue:manage") && ["/events", "Events"],
+    can(user.role, "catalogue:manage") && ["/items", "Items"],
+    can(user.role, "audit:view") && ["/audit", "Audit log"],
+    can(user.role, "accounts:manage") && ["/accounts", "Accounts"],
+  ].filter((x): x is string[] => Boolean(x));
+
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-            <Link href="/" className="font-semibold">ACM Inventory</Link>
-            <Link href="/receive" className="text-zinc-600 hover:text-zinc-900">Receive</Link>
-            <Link href="/distribute" className="text-zinc-600 hover:text-zinc-900">Distribute</Link>
-            <Link href="/stock" className="text-zinc-600 hover:text-zinc-900">Stock</Link>
-            <Link href="/records" className="text-zinc-600 hover:text-zinc-900">Records</Link>
-            <Link href="/search" className="text-zinc-600 hover:text-zinc-900">Search</Link>
-            {can(user.role, "audit:view") && (
-              <Link href="/audit" className="text-zinc-600 hover:text-zinc-900">Audit log</Link>
+    <div className="flex min-h-screen flex-1 flex-col">
+      <header className="sticky top-0 z-40 border-b border-line bg-nav/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+          <Link href="/" className="mr-auto md:mr-0"><Logo /></Link>
+
+          <nav className="order-last flex w-full items-center gap-1 overflow-x-auto md:order-none md:ml-auto md:w-auto md:overflow-visible">
+            {MAIN.map(([href, label]) => <NavLink key={href} href={href}>{label}</NavLink>)}
+            {manage.length > 0 && (
+              <Menu label={<>Manage <span aria-hidden className="text-xs">▾</span></>} className="hidden md:block">
+                {manage.map(([href, label]) => <NavLink key={href} href={href} variant="menu">{label}</NavLink>)}
+              </Menu>
             )}
-            {can(user.role, "catalogue:manage") && (
-              <>
-                <Link href="/events" className="text-zinc-600 hover:text-zinc-900">Events</Link>
-                <Link href="/items" className="text-zinc-600 hover:text-zinc-900">Items</Link>
-              </>
-            )}
-            {can(user.role, "accounts:manage") && (
-              <Link href="/accounts" className="text-zinc-600 hover:text-zinc-900">Accounts</Link>
-            )}
-            <Link href="/settings" className="text-zinc-600 hover:text-zinc-900">Settings</Link>
           </nav>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-zinc-600">
-              {user.name} <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{ROLE_LABELS[user.role]}</span>
-            </span>
-            <form action={logout}>
-              <button className="text-zinc-600 underline hover:text-zinc-900">Log out</button>
-            </form>
+
+          <div className="flex items-center gap-1 md:border-l md:border-line md:pl-4">
+            <ThemeToggle />
+            <Menu
+              align="right"
+              label={
+                <>
+                  <Avatar name={user.name} size="sm" />
+                  <span className="hidden max-w-32 truncate sm:inline">{user.name}</span>
+                  <span aria-hidden className="text-xs">▾</span>
+                </>
+              }
+            >
+              <div className="px-3 py-2">
+                <p className="truncate font-semibold">{user.name}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary">{ROLE_LABELS[user.role]}</p>
+              </div>
+              <div className="my-1 border-t border-line" />
+              <NavLink href="/settings" variant="menu">Settings</NavLink>
+              {manage.length > 0 && (
+                <div className="md:hidden">
+                  {manage.map(([href, label]) => <NavLink key={href} href={href} variant="menu">{label}</NavLink>)}
+                </div>
+              )}
+              <div className="my-1 border-t border-line" />
+              <form action={logout}>
+                <button className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-danger transition hover:bg-surface-2">Log out</button>
+              </form>
+            </Menu>
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
+
+      <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   );
 }

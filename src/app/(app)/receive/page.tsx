@@ -5,6 +5,7 @@ import ActionForm from "@/components/action-form";
 import { cardClass, tableClass, tdClass, thClass } from "../../ui";
 import { receiveGoods } from "./actions";
 import ReceiveFields from "./receive-fields";
+import PageShell from "@/components/page-shell";
 
 export default async function ReceivePage() {
   await requirePermission("records:create");
@@ -20,10 +21,9 @@ export default async function ReceivePage() {
   ]);
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Receive goods</h1>
+    <PageShell eyebrow="Stock in" title="Receive goods" description="Record goods that arrive for an event, with serial numbers where they apply.">
       {events.length === 0 || items.length === 0 ? (
-        <p className="text-sm text-zinc-500">An event and an item must exist first. Ask an officer to add them under Events and Items.</p>
+        <p className="text-sm text-muted">An event and an item must exist first. Ask an officer to add them under Events and Items.</p>
       ) : (
         <section className={`${cardClass} max-w-2xl`}>
           <ActionForm action={receiveGoods} submitLabel="Record goods">
@@ -35,8 +35,8 @@ export default async function ReceivePage() {
         </section>
       )}
       <section>
-        <h2 className="mb-2 font-medium">Recently received</h2>
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
+        <h2 className="mb-2 text-lg font-semibold tracking-tight">Recently received</h2>
+        <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
           <table className={tableClass}>
             <thead>
               <tr><th className={thClass}>When</th><th className={thClass}>Event</th><th className={thClass}>Item</th><th className={thClass}>Qty</th><th className={thClass}>From</th><th className={thClass}>By</th></tr>
@@ -57,6 +57,6 @@ export default async function ReceivePage() {
           </table>
         </div>
       </section>
-    </div>
+    </PageShell>
   );
 }
